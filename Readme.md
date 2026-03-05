@@ -16,4 +16,4 @@
    - Secret: `CLOUDFLARE_API_TOKEN` — 你的 API Token
    - Secret: `CLOUDFLARE_ACCOUNT_ID` — 你的 Account ID
 4. 推送程式碼到 `main` 分支後，Actions 會自動部署到 Cloudflare Pages
-5. 部署完成後，遊戲網址為：`https://tic-tac-toe.pages.dev`（或你的自訂域名）
+5. 部署完成後，遊戲網址為：`https://apptrackerhk-tic-tac-toe.pages.dev`
