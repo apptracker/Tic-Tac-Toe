@@ -175,6 +175,78 @@
 
         .score-x { color: var(--accent-x); }
         .score-o { color: var(--accent-o); }
+
+        .emoji-pickers {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            justify-content: center;
+        }
+
+        .emoji-picker {
+            background: var(--bg-dark);
+            border: 2px solid var(--grid-line);
+            border-radius: 16px;
+            padding: 0.75rem;
+            width: 130px;
+            text-align: center;
+        }
+
+        .emoji-picker.picker-x { border-color: rgba(255, 107, 107, 0.3); }
+        .emoji-picker.picker-o { border-color: rgba(78, 205, 196, 0.3); }
+
+        .picker-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            opacity: 0.7;
+        }
+
+        .picker-label.label-x { color: var(--accent-x); }
+        .picker-label.label-o { color: var(--accent-o); }
+
+        .current-emoji {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: transform 0.15s;
+            line-height: 1.2;
+        }
+
+        .current-emoji:hover { transform: scale(1.15); }
+
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 4px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+            padding: 0;
+        }
+
+        .emoji-grid.open {
+            max-height: 200px;
+            padding-top: 0.5rem;
+        }
+
+        .emoji-option {
+            font-size: 1.25rem;
+            padding: 4px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.15s, transform 0.15s;
+            line-height: 1.3;
+        }
+
+        .emoji-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.2);
+        }
+
+        .emoji-option.selected {
+            background: rgba(255, 255, 255, 0.15);
+        }
     </style>
 </head>
 <body>
@@ -182,7 +254,20 @@
     <p class="subtitle">Tic-Tac-Toe</p>
 
     <div class="game-container">
-        <div class="status" id="status">輪到 <span class="player-x">X</span> 下棋</div>
+        <div class="emoji-pickers">
+            <div class="emoji-picker picker-x">
+                <div class="picker-label label-x">玩家 1</div>
+                <div class="current-emoji" id="currentX" title="點擊選擇">❌</div>
+                <div class="emoji-grid" id="gridX"></div>
+            </div>
+            <div class="emoji-picker picker-o">
+                <div class="picker-label label-o">玩家 2</div>
+                <div class="current-emoji" id="currentO" title="點擊選擇">⭕</div>
+                <div class="emoji-grid" id="gridO"></div>
+            </div>
+        </div>
+
+        <div class="status" id="status">輪到 <span class="player-x">❌</span> 下棋</div>
 
         <div class="board" id="board">
             <div class="cell" data-index="0"></div>
@@ -199,8 +284,8 @@
         <button class="reset-btn" id="resetBtn">重新開始</button>
 
         <div class="scores">
-            <span class="score score-x">X: <strong id="scoreX">0</strong></span>
-            <span class="score score-o">O: <strong id="scoreO">0</strong></span>
+            <span class="score score-x">❌: <strong id="scoreX">0</strong></span>
+            <span class="score score-o">⭕: <strong id="scoreO">0</strong></span>
         </div>
     </div>
 
@@ -211,16 +296,83 @@
             [0, 4, 8], [2, 4, 6]
         ];
 
+        const EMOJI_OPTIONS = [
+            '😀','😎','🥳','😈',
+            '🔥','💎','⚡','🌟',
+            '🐱','🐶','🦊','🐸',
+            '🍎','🍕','🎯','🚀',
+            '❤️','💙','💜','💚',
+            '👻','🤖','👽','🎃',
+        ];
+
         let board = ['', '', '', '', '', '', '', '', ''];
         let currentPlayer = 'X';
         let gameOver = false;
         let scores = { X: 0, O: 0 };
+        let emojis = { X: '❌', O: '⭕' };
 
         const statusEl = document.getElementById('status');
         const boardEl = document.getElementById('board');
         const resetBtn = document.getElementById('resetBtn');
         const scoreXEl = document.getElementById('scoreX');
         const scoreOEl = document.getElementById('scoreO');
+        const currentXEl = document.getElementById('currentX');
+        const currentOEl = document.getElementById('currentO');
+        const gridXEl = document.getElementById('gridX');
+        const gridOEl = document.getElementById('gridO');
+
+        function buildEmojiGrid(gridEl, player) {
+            gridEl.innerHTML = '';
+            EMOJI_OPTIONS.forEach(em => {
+                const span = document.createElement('span');
+                span.className = 'emoji-option' + (emojis[player] === em ? ' selected' : '');
+                span.textContent = em;
+                span.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    emojis[player] = em;
+                    if (player === 'X') currentXEl.textContent = em;
+                    else currentOEl.textContent = em;
+                    gridEl.querySelectorAll('.emoji-option').forEach(s => s.classList.remove('selected'));
+                    span.classList.add('selected');
+                    refreshBoard();
+                    updateStatus();
+                    updateScoreLabels();
+                    gridEl.classList.remove('open');
+                });
+                gridEl.appendChild(span);
+            });
+        }
+
+        function toggleGrid(gridEl) {
+            const isOpen = gridEl.classList.contains('open');
+            gridXEl.classList.remove('open');
+            gridOEl.classList.remove('open');
+            if (!isOpen) gridEl.classList.add('open');
+        }
+
+        currentXEl.addEventListener('click', () => toggleGrid(gridXEl));
+        currentOEl.addEventListener('click', () => toggleGrid(gridOEl));
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.emoji-picker')) {
+                gridXEl.classList.remove('open');
+                gridOEl.classList.remove('open');
+            }
+        });
+
+        buildEmojiGrid(gridXEl, 'X');
+        buildEmojiGrid(gridOEl, 'O');
+
+        function refreshBoard() {
+            document.querySelectorAll('.cell').forEach((cell, i) => {
+                if (board[i]) cell.textContent = emojis[board[i]];
+            });
+        }
+
+        function updateScoreLabels() {
+            scoreXEl.parentElement.childNodes[0].textContent = emojis.X + ': ';
+            scoreOEl.parentElement.childNodes[0].textContent = emojis.O + ': ';
+        }
 
         function checkWinner() {
             for (const [a, b, c] of WIN_PATTERNS) {
@@ -237,7 +389,8 @@
                 if (result.winner === 'draw') {
                     statusEl.innerHTML = '和局！';
                 } else {
-                    statusEl.innerHTML = `<span class="player-${result.winner.toLowerCase()}">${result.winner}</span> 獲勝！`;
+                    const cls = result.winner === 'X' ? 'player-x' : 'player-o';
+                    statusEl.innerHTML = `<span class="${cls}">${emojis[result.winner]}</span> 獲勝！`;
                     scores[result.winner]++;
                     scoreXEl.textContent = scores.X;
                     scoreOEl.textContent = scores.O;
@@ -245,7 +398,7 @@
                 gameOver = true;
             } else {
                 const playerClass = currentPlayer === 'X' ? 'player-x' : 'player-o';
-                statusEl.innerHTML = `輪到 <span class="${playerClass}">${currentPlayer}</span> 下棋`;
+                statusEl.innerHTML = `輪到 <span class="${playerClass}">${emojis[currentPlayer]}</span> 下棋`;
             }
         }
 
@@ -260,7 +413,7 @@
 
             const index = parseInt(cell.dataset.index);
             board[index] = currentPlayer;
-            cell.textContent = currentPlayer;
+            cell.textContent = emojis[currentPlayer];
             cell.classList.add('taken', currentPlayer.toLowerCase());
 
             const result = checkWinner();
@@ -289,6 +442,7 @@
         boardEl.addEventListener('click', handleCellClick);
         resetBtn.addEventListener('click', reset);
 
+        updateScoreLabels();
         updateStatus();
     </script>
 </body>
