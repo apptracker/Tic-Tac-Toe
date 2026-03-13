@@ -15,6 +15,7 @@
             --accent-o: #4ecdc4;
             --text: #eaeaea;
             --grid-line: #2d2d44;
+            --nav-height: 56px;
         }
 
         * {
@@ -33,25 +34,71 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
-            padding: 2rem;
             color: var(--text);
         }
 
-        h1 {
-            font-size: 2.5rem;
+        .navbar {
+            width: 100%;
+            height: var(--nav-height);
+            background: rgba(15, 15, 26, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            padding: 0 1.5rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-brand {
+            font-size: 1.2rem;
             font-weight: 900;
-            margin-bottom: 0.5rem;
             background: linear-gradient(135deg, var(--accent-x), var(--accent-o));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            margin-right: 2rem;
+            text-decoration: none;
         }
 
-        .subtitle {
-            font-size: 1rem;
-            opacity: 0.7;
-            margin-bottom: 2rem;
+        .nav-items {
+            display: flex;
+            gap: 0.25rem;
+            list-style: none;
+        }
+
+        .nav-item {
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: rgba(234, 234, 234, 0.5);
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.06);
+            color: var(--text);
+        }
+
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text);
+        }
+
+        .page-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem;
         }
 
         .game-container {
@@ -108,11 +155,15 @@
         .cell.x {
             color: var(--accent-x);
             text-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
+            border-color: var(--accent-x);
+            background: rgba(255, 107, 107, 0.08);
         }
 
         .cell.o {
             color: var(--accent-o);
             text-shadow: 0 0 20px rgba(78, 205, 196, 0.3);
+            border-color: var(--accent-o);
+            background: rgba(78, 205, 196, 0.08);
         }
 
         .cell.winner {
@@ -250,9 +301,16 @@
     </style>
 </head>
 <body>
-    <h1>井字過三關</h1>
-    <p class="subtitle">Tic-Tac-Toe</p>
+    <nav class="navbar">
+        <a class="nav-brand" href="#">AppTracker</a>
+        <ul class="nav-items">
+            <li><a class="nav-item active" href="#">🎮 井字過三關</a></li>
+            <li><a class="nav-item" href="#">📊 排行榜</a></li>
+            <li><a class="nav-item" href="#">⚙️ 設定</a></li>
+        </ul>
+    </nav>
 
+    <div class="page-content">
     <div class="game-container">
         <div class="emoji-pickers">
             <div class="emoji-picker picker-x">
@@ -287,6 +345,7 @@
             <span class="score score-x">❌: <strong id="scoreX">0</strong></span>
             <span class="score score-o">⭕: <strong id="scoreO">0</strong></span>
         </div>
+    </div>
     </div>
 
     <script>
