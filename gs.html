@@ -41,14 +41,19 @@
         .write-card{background:var(--bg-card);border-radius:20px;padding:1.5rem;box-shadow:0 20px 40px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.05);text-align:center}
         .write-illust{width:200px;height:140px;margin:0 auto .5rem;border-radius:12px;overflow:hidden}
         .write-illust svg{width:100%;height:100%}
-        .write-hint{font-size:.9rem;font-weight:700;margin-bottom:.6rem;opacity:.7}
-        .write-prompt{font-size:.75rem;opacity:.35;margin-bottom:.6rem}
-        .canvas-area{position:relative;margin:0 auto .7rem;border-radius:14px;overflow:hidden;border:2px solid var(--grid-line);background:#fff;touch-action:none}
-        .canvas-area canvas{display:block;cursor:crosshair}
-        .write-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:.6rem}
-        .w-btn{padding:.5rem 1rem;border-radius:10px;border:2px solid var(--grid-line);background:var(--bg-dark);color:var(--text);font-family:inherit;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .15s}
+        .write-hint{font-size:.9rem;font-weight:700;margin-bottom:.4rem;opacity:.7}
+        .write-prompt{font-size:.75rem;opacity:.35;margin-bottom:.5rem}
+        .char-boxes{display:flex;gap:10px;justify-content:center;margin-bottom:.7rem;flex-wrap:wrap}
+        .char-box{position:relative;width:88px;height:88px;border-radius:10px;overflow:hidden;border:2px solid var(--grid-line);background:#fff;touch-action:none}
+        .char-box canvas{display:block;cursor:crosshair}
+        .char-box-grid{position:absolute;inset:0;pointer-events:none}
+        .char-box-grid line{stroke:#e0e0e0;stroke-width:1;stroke-dasharray:4 3}
+        .char-box-num{position:absolute;top:2px;left:5px;font-size:.6rem;color:#bbb;pointer-events:none;font-weight:700;z-index:2}
+        .char-answer{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:3rem;font-weight:900;color:var(--accent-gold);opacity:0;pointer-events:none;transition:opacity .3s;text-shadow:0 1px 4px rgba(0,0,0,.12);font-family:'Noto Sans TC',sans-serif}
+        .char-answer.show{opacity:1}
+        .write-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:.5rem}
+        .w-btn{padding:.45rem .9rem;border-radius:10px;border:2px solid var(--grid-line);background:var(--bg-dark);color:var(--text);font-family:inherit;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .15s}
         .w-btn:hover{border-color:rgba(255,255,255,.2)}.w-btn.green{border-color:var(--accent-o);color:var(--accent-o)}.w-btn.red{border-color:var(--accent-x);color:var(--accent-x)}.w-btn.gold{border-color:var(--accent-gold);color:var(--accent-gold)}
-        .write-answer{font-size:2.5rem;font-weight:900;color:var(--accent-gold);letter-spacing:.2em;margin:.4rem 0;min-height:3rem}
         .write-progress{display:flex;align-items:center;justify-content:center;gap:.5rem;font-size:.7rem;opacity:.35;margin-top:.4rem}
         .write-progress-dots{display:flex;gap:3px}.w-dot{width:7px;height:7px;border-radius:50%;background:var(--grid-line)}.w-dot.done{background:var(--accent-o)}.w-dot.wrong{background:var(--accent-x)}.w-dot.current{background:var(--accent-gold);box-shadow:0 0 6px var(--accent-gold)}
 
@@ -112,59 +117,59 @@ function heart(x,y,s){s=s||1;return `<g transform="translate(${x},${y}) scale(${
 
 const VOCAB=[
 {topic:'社區與服務',icon:'🏘️',words:[
-{word:'救生員',hint:'喺泳池或沙灘保護大家安全嘅人',sentence:'救生員 喺沙灘上巡邏，保護游泳嘅人。',
+{word:'救生員',hint:'在泳池或沙灘保護大家安全的人',sentence:'救生員在沙灘上巡邏，保護游泳的人。',
 svg:S(sky('#87CEEB','#E0F7FA')+sun(200,30,20)+water(100)+ground('#F9A825',100)+'<rect x="20" y="75" width="8" height="30" fill="#795548"/><rect x="14" y="70" width="20" height="8" fill="#F44336" rx="2"/>'+person(120,85,'#FFCC80','#F44336')+`<text x="155" y="90" font-size="20">🏊</text><path d="M0 105 Q20 100 40 105 T80 105 T120 105 T160 105 T200 105 T240 105" fill="none" stroke="#4FC3F7" stroke-width="2"/>`)},
-{word:'郵差',hint:'每日幫我哋送信同包裹',sentence:'郵差 叔叔每日都準時送信。',
+{word:'郵差',hint:'每天幫我們送信和包裹的人',sentence:'郵差叔叔每天都準時送信。',
 svg:S(sky('#90CAF9','#E3F2FD')+cloud(60,25,.8)+cloud(180,15,.6)+ground('#8BC34A',120)+`<rect x="170" y="85" width="40" height="35" fill="#F5F5F5" rx="3"/><rect x="165" y="80" width="50" height="8" fill="#F44336"/>` +person(80,105,'#FFCC80','#1565C0')+`<rect x="68" y="88" width="12" height="16" fill="#FFF9C4" rx="1"/><circle cx="80" cy="128" r="10" fill="#424242" stroke="#757575" stroke-width="2"/><circle cx="100" cy="128" r="10" fill="#424242" stroke="#757575" stroke-width="2"/><rect x="78" y="118" width="24" height="8" fill="#1565C0" rx="2"/>`)},
-{word:'醫院',hint:'睇醫生同護士嘅地方',sentence:'肚痛嘅時候要去 醫院 睇醫生。',
+{word:'醫院',hint:'看醫生和護士的地方',sentence:'肚子痛的時候要去醫院看醫生。',
 svg:S(sky('#90CAF9','#BBDEFB')+cloud(50,20,.7)+ground('#A5D6A7',125)+`<rect x="60" y="55" width="120" height="70" fill="#E3F2FD" rx="4"/><rect x="55" y="48" width="130" height="12" fill="#E8EAF6" rx="3"/><rect x="110" y="70" width="20" height="10" fill="#F44336" rx="2"/><rect x="117" y="63" width="6" height="24" fill="#F44336" rx="1"/><rect x="75" y="95" width="18" height="22" fill="#90CAF9" rx="2"/><rect x="147" y="95" width="18" height="22" fill="#90CAF9" rx="2"/><rect x="105" y="100" width="30" height="25" fill="#8D6E63" rx="2"/>`)},
-{word:'圖書館',hint:'可以借書同安靜閱讀嘅地方',sentence:'我最鍾意去 圖書館 借故事書。',
+{word:'圖書館',hint:'可以借書和安靜閱讀的地方',sentence:'我最喜歡去圖書館借故事書。',
 svg:S(sky('#FFF8E1','#FFECB3')+ground('#BCAAA4',128)+`<rect x="40" y="50" width="160" height="78" fill="#EFEBE9" rx="4"/><polygon points="30,50 120,15 210,50" fill="#8D6E63"/><rect x="60" y="70" width="22" height="30" fill="#90CAF9" rx="2"/><rect x="109" y="70" width="22" height="30" fill="#90CAF9" rx="2"/><rect x="158" y="70" width="22" height="30" fill="#90CAF9" rx="2"/><rect x="95" y="95" width="50" height="33" fill="#6D4C41" rx="2"/>` +`<rect x="70" y="108" width="12" height="16" fill="#F44336" rx="1"/><rect x="84" y="111" width="12" height="13" fill="#2196F3" rx="1"/><rect x="144" y="108" width="12" height="16" fill="#4CAF50" rx="1"/><rect x="158" y="110" width="12" height="14" fill="#FF9800" rx="1"/>`)},
-{word:'街燈',hint:'夜晚照亮街道嘅燈',sentence:'街燈 令到夜晚嘅街道好光亮。',
+{word:'街燈',hint:'夜間照亮街道的燈',sentence:'街燈令夜間的街道十分光亮。',
 svg:S(sky('#1A237E','#283593')+star(30,20)+star(80,40,2)+star(180,25,2.5)+star(210,50,1.8)+ground('#37474F',125)+`<rect x="118" y="40" width="4" height="90" fill="#78909C"/><ellipse cx="120" cy="38" rx="16" ry="8" fill="#78909C"/><ellipse cx="120" cy="35" rx="10" ry="10" fill="#FFF9C4" opacity=".9"/><ellipse cx="120" cy="35" rx="20" ry="20" fill="#FFF176" opacity=".15"/><ellipse cx="120" cy="35" rx="35" ry="35" fill="#FFF176" opacity=".08"/>` +`<rect x="50" y="95" width="30" height="30" fill="#455A64" rx="2"/><rect x="55" y="100" width="8" height="8" fill="#FFF9C4" opacity=".7" rx="1"/><rect x="67" y="100" width="8" height="8" fill="#FFF9C4" opacity=".5" rx="1"/>`)},
-{word:'服務',hint:'幫助其他人嘅行為',sentence:'義工用 服務 精神幫助有需要嘅人。',
+{word:'服務',hint:'幫助他人的行為',sentence:'義工用服務精神幫助有需要的人。',
 svg:S(sky('#E8F5E9','#C8E6C9')+ground('#A5D6A7',125)+person(90,108,'#FFCC80','#4CAF50')+person(150,108,'#FFCC80','#FF9800')+`<rect x="115" y="85" width="20" height="14" fill="#FFEB3B" rx="2"/>`+heart(120,55,.8))},
-{word:'新界',hint:'香港三大區域之一',sentence:'新界 有好多農田同郊野公園。',
+{word:'新界',hint:'香港三大區域之一',sentence:'新界有很多農田和郊野公園。',
 svg:S(sky('#81D4FA','#B3E5FC')+cloud(50,20,.7)+cloud(190,30,.5)+`<polygon points="0,100 40,50 80,90 120,40 170,80 210,55 240,85 240,120 0,120" fill="#4CAF50" opacity=".6"/><polygon points="0,110 50,70 100,100 150,60 200,90 240,75 240,130 0,130" fill="#388E3C"/>`+ground('#8D6E63',130)+tree(30,125)+tree(210,128))},
-{word:'海星',hint:'住喺海底，有五隻腳嘅動物',sentence:'海星 有五隻腳，住喺海底石頭上。',
+{word:'海星',hint:'住在海底，有五隻腳的動物',sentence:'海星有五隻腳，住在海底的石頭上。',
 svg:S(`<rect width="240" height="160" fill="#0277BD"/><ellipse cx="120" cy="180" rx="140" ry="60" fill="#01579B"/>`+`<polygon points="120,50 128,75 155,75 133,90 140,115 120,100 100,115 107,90 85,75 112,75" fill="#FF7043" stroke="#E64A19" stroke-width="1.5"/><circle cx="120" cy="82" r="4" fill="#FFCC80"/>`+`<ellipse cx="60" cy="135" rx="20" ry="8" fill="#4E342E" opacity=".4"/><ellipse cx="180" cy="140" rx="15" ry="6" fill="#4E342E" opacity=".3"/><circle cx="40" cy="60" r="3" fill="#80DEEA" opacity=".4"/><circle cx="190" cy="45" r="2" fill="#80DEEA" opacity=".3"/>`)},
-{word:'太陽',hint:'日頭發光發熱嘅恆星',sentence:'太陽 每日從東邊升起。',
+{word:'太陽',hint:'白天發光發熱的恆星',sentence:'太陽每天從東邊升起。',
 svg:S(sky('#87CEEB','#FFF9C4')+`<circle cx="120" cy="70" r="50" fill="#FFF176" opacity=".15"/><circle cx="120" cy="70" r="35" fill="#FFF9C4" opacity=".3"/>`+sun(120,70,25)+cloud(40,90,.7)+cloud(190,100,.6)+`<line x1="120" y1="25" x2="120" y2="15" stroke="#FFD54F" stroke-width="3" stroke-linecap="round"/><line x1="155" y1="35" x2="162" y2="28" stroke="#FFD54F" stroke-width="3" stroke-linecap="round"/><line x1="85" y1="35" x2="78" y2="28" stroke="#FFD54F" stroke-width="3" stroke-linecap="round"/><line x1="160" y1="70" x2="170" y2="70" stroke="#FFD54F" stroke-width="3" stroke-linecap="round"/><line x1="80" y1="70" x2="70" y2="70" stroke="#FFD54F" stroke-width="3" stroke-linecap="round"/>`)},
-{word:'月亮',hint:'夜晚喺天空嘅衛星',sentence:'中秋節嘅 月亮 又圓又光。',
+{word:'月亮',hint:'夜間在天空的衛星',sentence:'中秋節的月亮又圓又亮。',
 svg:S(sky('#0D1B2A','#1B2838')+star(30,25)+star(70,50,2)+star(160,20,2.5)+star(200,55,1.8)+star(40,80,1.5)+star(210,30)+moon(120,65)+`<ellipse cx="120" cy="65" rx="35" ry="35" fill="#FFF9C4" opacity=".06"/>`)},
-{word:'益蟲',hint:'對農作物有益嘅昆蟲，例如蜜蜂、瓢蟲',sentence:'蜜蜂係 益蟲，幫花朵傳播花粉。',
+{word:'益蟲',hint:'對農作物有益的昆蟲，例如蜜蜂、瓢蟲',sentence:'蜜蜂是益蟲，幫花朵傳播花粉。',
 svg:S(sky('#C8E6C9','#E8F5E9')+ground('#8BC34A',115)+`<rect x="95" y="80" width="4" height="40" fill="#66BB6A"/><circle cx="80" cy="75" r="12" fill="#E91E63" opacity=".8"/><circle cx="80" cy="75" r="5" fill="#F48FB1"/><rect x="115" y="75" width="4" height="45" fill="#66BB6A"/><circle cx="117" cy="70" r="10" fill="#FF9800" opacity=".8"/><circle cx="117" cy="70" r="4" fill="#FFE082"/>`+`<ellipse cx="140" cy="55" rx="14" ry="10" fill="#F44336"/><line x1="140" y1="48" x2="140" y2="62" stroke="#212121" stroke-width="1"/><circle cx="136" cy="50" r="2" fill="#212121"/><circle cx="144" cy="50" r="2" fill="#212121"/><circle cx="136" cy="56" r="2" fill="#212121"/><circle cx="144" cy="56" r="2" fill="#212121"/>`+`<ellipse cx="65" cy="40" rx="10" ry="8" fill="#FFC107"/><ellipse cx="65" cy="48" rx="8" ry="7" fill="#FF8F00"/><ellipse cx="60" cy="36" rx="8" ry="4" fill="#FFF9C4" opacity=".6"/><ellipse cx="70" cy="36" rx="8" ry="4" fill="#FFF9C4" opacity=".6"/>`)},
-{word:'寄居蟹',hint:'借其他貝殼嚟住嘅蟹',sentence:'寄居蟹 搵到大啲嘅殼就會搬屋。',
+{word:'寄居蟹',hint:'借其他貝殼來住的蟹',sentence:'寄居蟹找到更大的殼就會搬家。',
 svg:S(sky('#90CAF9','#E3F2FD')+ground('#FFF9C4',110)+water(125)+`<ellipse cx="120" cy="95" rx="30" ry="22" fill="#FFAB91"/><ellipse cx="120" cy="90" rx="25" ry="18" fill="#FF8A65"/><path d="M95 95 Q85 85 80 95" stroke="#E64A19" stroke-width="3" fill="none"/><path d="M145 95 Q155 85 160 95" stroke="#E64A19" stroke-width="3" fill="none"/><circle cx="110" cy="82" r="3" fill="#212121"/><circle cx="130" cy="82" r="3" fill="#212121"/>` +`<ellipse cx="60" cy="118" rx="12" ry="6" fill="#D7CCC8"/><ellipse cx="185" cy="120" rx="8" ry="5" fill="#D7CCC8"/>`)},
-{word:'農曆十五',hint:'月圓之夜，中秋節就係農曆八月十五',sentence:'農曆十五 嘅月亮最圓最光。',
+{word:'農曆十五',hint:'月圓之夜，中秋節就是農曆八月十五',sentence:'農曆十五的月亮最圓最亮。',
 svg:S(sky('#1A237E','#311B92')+`<circle cx="120" cy="55" r="30" fill="#FFF9C4"/><circle cx="120" cy="55" r="25" fill="#FFF176" opacity=".5"/>` +star(40,30)+star(80,20,2)+star(180,35,2)+star(210,20,1.5)+ground('#2E7D32',120)+`<rect x="55" y="95" width="14" height="30" fill="#F44336" rx="3"/><rect x="57" y="88" width="10" height="10" fill="#FF5722" rx="5"/><rect x="170" y="95" width="14" height="30" fill="#F44336" rx="3"/><rect x="172" y="88" width="10" height="10" fill="#FF5722" rx="5"/>`)},
-{word:'愛護',hint:'愛惜同保護身邊嘅人同事物',sentence:'我哋要 愛護 大自然同小動物。',
+{word:'愛護',hint:'愛惜和保護身邊的人和事物',sentence:'我們要愛護大自然和小動物。',
 svg:S(sky('#FCE4EC','#F8BBD0')+ground('#C8E6C9',120)+heart(120,50,2)+`<ellipse cx="120" cy="50" rx="40" ry="40" fill="#E91E63" opacity=".06"/>` +tree(40,118)+`<ellipse cx="180" cy="110" rx="10" ry="8" fill="#8D6E63" rx="5"/><circle cx="176" cy="105" r="3" fill="#212121"/><ellipse cx="186" cy="114" rx="4" ry="2" fill="#8D6E63"/>` +person(100,108,'#FFCC80','#E91E63'))},
-{word:'守時',hint:'準時赴約，唔好遲到',sentence:'守時 係一個好重要嘅品德。',
+{word:'守時',hint:'準時赴約，不要遲到',sentence:'守時是一個很重要的品德。',
 svg:S(sky('#E8EAF6','#C5CAE9')+ground('#B0BEC5',125)+`<circle cx="120" cy="70" r="40" fill="#FFF" stroke="#3F51B5" stroke-width="4"/><circle cx="120" cy="70" r="35" fill="#FAFAFA"/><line x1="120" y1="70" x2="120" y2="42" stroke="#212121" stroke-width="3" stroke-linecap="round"/><line x1="120" y1="70" x2="142" y2="70" stroke="#212121" stroke-width="2.5" stroke-linecap="round"/><circle cx="120" cy="70" r="3" fill="#F44336"/>`+`<text x="120" y="38" text-anchor="middle" font-size="8" fill="#3F51B5" font-weight="700">12</text><text x="155" y="73" text-anchor="middle" font-size="8" fill="#3F51B5" font-weight="700">3</text><text x="120" y="108" text-anchor="middle" font-size="8" fill="#3F51B5" font-weight="700">6</text><text x="85" y="73" text-anchor="middle" font-size="8" fill="#3F51B5" font-weight="700">9</text>`+`<path d="M165 115 L175 125 L195 105" stroke="#4CAF50" stroke-width="5" fill="none" stroke-linecap="round"/>`)},
 {word:'清潔',hint:'保持乾淨整齊',sentence:'飯後要幫手做 清潔 工作。',
 svg:S(sky('#E0F7FA','#B2EBF2')+ground('#ECEFF1',120)+`<rect x="85" y="55" width="6" height="70" fill="#8D6E63" rx="2"/><polygon points="70,55 100,55 88,35" fill="#795548"/>`+`<circle cx="150" cy="70" r="3" fill="#4FC3F7" opacity=".6"/><circle cx="160" cy="55" r="2" fill="#4FC3F7" opacity=".5"/><circle cx="145" cy="50" r="2.5" fill="#4FC3F7" opacity=".4"/><circle cx="165" cy="65" r="2" fill="#4FC3F7" opacity=".5"/>`+`<polygon points="140,85 170,85 165,60 145,60" fill="#90A4AE" opacity=".5"/><rect x="143" y="62" width="20" height="5" fill="#78909C"/>`)},
-{word:'和睦',hint:'大家和平友善咁相處',sentence:'我哋一家人相處得好 和睦。',
+{word:'和睦',hint:'大家和平友善地相處',sentence:'我們一家人相處得很和睦。',
 svg:S(sky('#FFF8E1','#FFECB3')+ground('#A5D6A7',120)+house(90,70,60,50,'#FFECB3','#EF5350')+person(45,108,'#FFCC80','#42A5F5')+person(75,105,'#FFCC80','#E91E63')+person(195,108,'#D7CCC8','#FF9800')+`<text x="168" y="105" font-size="16">👧</text>`+heart(120,35,.6))},
-{word:'相處',hint:'同其他人一齊生活同交流',sentence:'同學之間要友善 相處。',
+{word:'相處',hint:'與其他人一起生活和交流',sentence:'同學之間要友善 相處。',
 svg:S(sky('#E8F5E9','#C8E6C9')+ground('#81C784',125)+person(90,110,'#FFCC80','#42A5F5')+person(150,110,'#D7CCC8','#FF7043')+`<ellipse cx="120" cy="80" rx="22" ry="12" fill="#FFF" opacity=".8" rx="10"/><text x="120" y="84" text-anchor="middle" font-size="10" fill="#424242">哈哈!</text>`)},
-{word:'寧靜',hint:'安安靜靜，冇嘈音',sentence:'圖書館入面要保持 寧靜。',
+{word:'寧靜',hint:'安安靜靜，沒有噪音',sentence:'圖書館裏面要保持寧靜。',
 svg:S(sky('#E8EAF6','#F3E5F5')+`<ellipse cx="80" cy="100" rx="35" ry="30" fill="#7CB342" opacity=".5"/><ellipse cx="160" cy="95" rx="30" ry="28" fill="#8BC34A" opacity=".4"/>`+tree(80,118)+tree(160,115)+`<path d="M0 130 Q40 125 80 130 T160 130 T240 130 L240 160 L0 160Z" fill="#A5D6A7"/>`+`<circle cx="40" cy="50" r="2" fill="#CE93D8" opacity=".5"/><circle cx="120" cy="35" r="2.5" fill="#CE93D8" opacity=".4"/><circle cx="200" cy="45" r="2" fill="#CE93D8" opacity=".3"/>`)},
-{word:'傷害',hint:'令人受傷或者唔開心',sentence:'唔好用說話 傷害 其他人。',
+{word:'傷害',hint:'令人受傷或者不開心',sentence:'不要用說話傷害其他人。',
 svg:S(sky('#ECEFF1','#CFD8DC')+ground('#B0BEC5',125)+`<circle cx="120" cy="70" r="30" fill="#FFF9C4"/><circle cx="110" cy="64" r="3" fill="#212121"/><circle cx="130" cy="64" r="3" fill="#212121"/><path d="M108 82 Q120 76 132 82" stroke="#212121" stroke-width="2" fill="none"/><circle cx="105" cy="72" r="4" fill="#90CAF9" opacity=".6"/>`+`<text x="170" y="50" font-size="20" opacity=".6">⚠️</text>`)},
-{word:'游泳',hint:'喺水入面運動',sentence:'夏天我成日去 游泳 消暑。',
+{word:'游泳',hint:'在水中運動',sentence:'夏天我經常去游泳消暑。',
 svg:S(sky('#87CEEB','#E0F7FA')+sun(200,25,15)+water(80)+`<ellipse cx="120" cy="90" rx="15" ry="8" fill="#FFCC80"/><circle cx="115" cy="84" r="10" fill="#FFCC80"/><circle cx="112" cy="82" r="2" fill="#212121"/><ellipse cx="135" cy="95" rx="10" ry="4" fill="#FFCC80"/>`+`<path d="M0 95 Q30 88 60 95 T120 95 T180 95 T240 95" fill="none" stroke="#4FC3F7" stroke-width="2" opacity=".6"/>`)},
-{word:'休息',hint:'攰咗就要瞓覺或者放鬆',sentence:'做完功課之後要 休息 一下。',
+{word:'休息',hint:'疲倦了就要睡覺或者放鬆',sentence:'做完功課之後要 休息 一下。',
 svg:S(sky('#1A237E','#283593')+star(50,30)+star(150,20,2)+star(200,45)+`<rect x="50" y="85" width="140" height="50" fill="#5D4037" rx="6"/><rect x="45" y="80" width="150" height="10" fill="#4E342E" rx="3"/><ellipse cx="75" cy="82" rx="20" ry="8" fill="#FAFAFA"/>`+`<circle cx="110" cy="80" r="12" fill="#FFCC80"/><circle cx="107" cy="78" r="1.5" fill="#212121"/><path d="M105 84 Q110 86 115 84" stroke="#212121" stroke-width="1" fill="none"/><text x="140" y="72" font-size="14" fill="#FFF" opacity=".5">Z</text><text x="155" y="62" font-size="11" fill="#FFF" opacity=".35">Z</text><text x="165" y="55" font-size="8" fill="#FFF" opacity=".2">Z</text>`)},
-{word:'溫習',hint:'重新睇返學過嘅嘢',sentence:'考試之前要認真 溫習。',
+{word:'溫習',hint:'重新看回學過的內容',sentence:'考試之前要認真 溫習。',
 svg:S(sky('#FFF8E1','#FFF3E0')+`<rect x="50" y="50" width="140" height="85" fill="#EFEBE9" rx="4"/>`+`<rect x="70" y="70" width="50" height="35" fill="#E3F2FD" rx="2" transform="rotate(-5 95 87)"/><rect x="65" y="68" width="50" height="35" fill="#FFF" rx="2" stroke="#90CAF9" stroke-width="1"/><line x1="72" y1="78" x2="108" y2="78" stroke="#BDBDBD" stroke-width="1"/><line x1="72" y1="84" x2="100" y2="84" stroke="#BDBDBD" stroke-width="1"/><line x1="72" y1="90" x2="105" y2="90" stroke="#BDBDBD" stroke-width="1"/>`+`<rect x="130" y="75" width="8" height="40" fill="#FFC107" rx="2"/><polygon points="134,72 130,78 138,78" fill="#FF9800"/>`+`<circle cx="165" cy="60" r="12" fill="#FFF176" opacity=".6"/><text x="165" y="64" text-anchor="middle" font-size="12" fill="#F57F17">💡</text>`)},
-{word:'康樂文娛',hint:'有益身心嘅娛樂活動',sentence:'學校有 康樂文娛 委員會搞活動。',
+{word:'康樂文娛',hint:'有益身心的娛樂活動',sentence:'學校有康樂文娛委員會舉辦活動。',
 svg:S(sky('#F3E5F5','#E1BEE7')+ground('#CE93D8',125)+`<text x="50" y="55" font-size="30">🎨</text><text x="120" y="70" font-size="28">🎵</text><text x="170" y="50" font-size="25">🎭</text>`+`<circle cx="40" cy="100" r="6" fill="#F44336" opacity=".5"/><circle cx="80" cy="110" r="5" fill="#2196F3" opacity=".4"/><circle cx="200" cy="105" r="7" fill="#4CAF50" opacity=".4"/><circle cx="160" cy="115" r="4" fill="#FF9800" opacity=".5"/>`)},
-{word:'友好',hint:'對人友善同親切',sentence:'新同學來到，大家要 友好 對待佢。',
+{word:'友好',hint:'對人友善和親切',sentence:'新同學來到，大家要友好地對待他。',
 svg:S(sky('#E8F5E9','#C8E6C9')+ground('#A5D6A7',120)+person(85,108,'#FFCC80','#42A5F5')+person(155,108,'#D7CCC8','#FF7043')+`<path d="M110 95 Q120 85 130 95" stroke="#FFCC80" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M107 97 Q120 88 133 97" stroke="#FFCC80" stroke-width="2" fill="none" opacity=".5"/>` +`<text x="120" y="55" text-anchor="middle" font-size="14" fill="#66BB6A">😊</text>`)},
-{word:'形狀',hint:'物件嘅外形，例如圓形、正方形',sentence:'唔同嘅 形狀 有唔同嘅名稱。',
+{word:'形狀',hint:'物件的外形，例如圓形、正方形',sentence:'不同的形狀有不同的名稱。',
 svg:S(sky('#FFF3E0','#FFE0B2')+`<circle cx="70" cy="60" r="25" fill="#EF5350" opacity=".8"/><rect x="130" y="40" width="45" height="45" fill="#42A5F5" opacity=".8" rx="4"/><polygon points="120,125 100,155 140,155" fill="#4CAF50" opacity=".8"/>` +`<ellipse cx="55" cy="130" rx="25" ry="15" fill="#FF9800" opacity=".7"/><polygon points="195,95 185,120 205,120" fill="#9C27B0" opacity=".7"/>`)},
-{word:'引路徑',hint:'帶路嘅小路',sentence:'公園入面有 引路徑 帶你去湖邊。',
+{word:'引路徑',hint:'帶路的小路',sentence:'公園裏面有引路徑帶你去湖邊。',
 svg:S(sky('#C8E6C9','#E8F5E9')+tree(30,105)+tree(210,108)+tree(60,100)+tree(180,102)+`<path d="M120 160 Q110 130 95 110 Q80 90 90 70 Q100 50 120 45" stroke="#8D6E63" stroke-width="18" fill="none" opacity=".4" stroke-linecap="round"/><path d="M120 160 Q110 130 95 110 Q80 90 90 70 Q100 50 120 45" stroke="#BCAAA4" stroke-width="10" fill="none" opacity=".6" stroke-linecap="round" stroke-dasharray="2 6"/>` +ground('#66BB6A',135))},
 ]}];
 
@@ -200,19 +205,28 @@ document.querySelectorAll('.mode-btn[data-mode]').forEach(btn=>{
 })();
 
 // 2. Writing
-let wI=0,wO=[],wR=[];const CW=280,CH=200;
+let wI=0,wO=[],wR=[];const BX=88;
 function startWrite(){wI=0;wR=[];wO=[...allWords].sort(()=>Math.random()-.5);showW();}
+function initBox(cv){
+    const cx=cv.getContext('2d');cx.lineCap='round';cx.lineJoin='round';cx.lineWidth=3.5;cx.strokeStyle='#333';let dr=false;
+    function gp(e){const r=cv.getBoundingClientRect(),t=e.touches?e.touches[0]:e;return[t.clientX-r.left,t.clientY-r.top];}
+    cv.onmousedown=e=>{dr=true;const[x,y]=gp(e);cx.beginPath();cx.moveTo(x,y);};cv.onmousemove=e=>{if(!dr)return;const[x,y]=gp(e);cx.lineTo(x,y);cx.stroke();};cv.onmouseup=cv.onmouseleave=()=>dr=false;
+    cv.addEventListener('touchstart',e=>{e.preventDefault();dr=true;const[x,y]=gp(e);cx.beginPath();cx.moveTo(x,y);},{passive:false});
+    cv.addEventListener('touchmove',e=>{if(!dr)return;e.preventDefault();const[x,y]=gp(e);cx.lineTo(x,y);cx.stroke();},{passive:false});
+    cv.addEventListener('touchend',()=>dr=false);
+    return cx;
+}
 function showW(){
     const ct=document.getElementById('panelWrite');
     if(wI>=wO.length)wI=0;
-    const w=wO[wI];
-    ct.innerHTML=`<div class="write-card"><div class="write-illust">${w.svg}</div><div class="write-hint">${w.hint}</div><div class="write-prompt">請喺下面寫出呢個詞語 ✍️</div><div class="canvas-area" style="width:${CW}px;height:${CH}px;margin:0 auto .7rem"><canvas id="wC" width="${CW}" height="${CH}"></canvas></div><div class="write-btns"><button class="w-btn" id="wCl">🗑️ 擦掉</button><button class="w-btn gold" id="wSh">👀 睇答案</button><button class="w-btn green" id="wNx" style="display:none">✅ 識寫</button><button class="w-btn red" id="wRt" style="display:none">❌ 再練</button></div><div class="write-answer" id="wAn"></div><div class="write-progress">第${wI+1}/${wO.length}個<div class="write-progress-dots" id="wD"></div></div></div>`;
-    const cv=document.getElementById('wC'),cx=cv.getContext('2d');cx.lineCap='round';cx.lineJoin='round';cx.lineWidth=4;cx.strokeStyle='#333';let dr=false;
-    function gp(e){const r=cv.getBoundingClientRect(),t=e.touches?e.touches[0]:e;return[t.clientX-r.left,t.clientY-r.top]}
-    cv.onmousedown=e=>{dr=true;const[x,y]=gp(e);cx.beginPath();cx.moveTo(x,y)};cv.onmousemove=e=>{if(!dr)return;const[x,y]=gp(e);cx.lineTo(x,y);cx.stroke()};cv.onmouseup=cv.onmouseleave=()=>dr=false;
-    cv.addEventListener('touchstart',e=>{e.preventDefault();dr=true;const[x,y]=gp(e);cx.beginPath();cx.moveTo(x,y)},{passive:false});cv.addEventListener('touchmove',e=>{if(!dr)return;e.preventDefault();const[x,y]=gp(e);cx.lineTo(x,y);cx.stroke()},{passive:false});cv.addEventListener('touchend',()=>dr=false);
-    document.getElementById('wCl').onclick=()=>cx.clearRect(0,0,CW,CH);
-    document.getElementById('wSh').onclick=()=>{document.getElementById('wAn').textContent=w.word;document.getElementById('wSh').style.display='none';document.getElementById('wNx').style.display='';document.getElementById('wRt').style.display='';};
+    const w=wO[wI],chars=[...w.word];
+    const gridSvg=`<svg class="char-box-grid" viewBox="0 0 ${BX} ${BX}"><line x1="${BX/2}" y1="0" x2="${BX/2}" y2="${BX}"/><line x1="0" y1="${BX/2}" x2="${BX}" y2="${BX/2}"/></svg>`;
+    const boxes=chars.map((_,i)=>`<div class="char-box"><span class="char-box-num">${i+1}</span>${gridSvg}<canvas width="${BX}" height="${BX}" data-idx="${i}"></canvas><div class="char-answer" data-ca="${i}">${chars[i]}</div></div>`).join('');
+    ct.innerHTML=`<div class="write-card"><div class="write-illust">${w.svg}</div><div class="write-hint">${w.hint}</div><div class="write-prompt">請在每個格子寫出對應的字 ✍️</div><div class="char-boxes">${boxes}</div><div class="write-btns"><button class="w-btn" id="wCl">🗑️ 擦掉</button><button class="w-btn gold" id="wSh">👀 看答案</button><button class="w-btn green" id="wNx" style="display:none">✅ 會寫</button><button class="w-btn red" id="wRt" style="display:none">❌ 再練</button></div><div class="write-progress">第${wI+1}/${wO.length}個<div class="write-progress-dots" id="wD"></div></div></div>`;
+    const canvases=ct.querySelectorAll('.char-box canvas');
+    const ctxs=[];canvases.forEach(cv=>ctxs.push(initBox(cv)));
+    document.getElementById('wCl').onclick=()=>ctxs.forEach((cx,i)=>cx.clearRect(0,0,BX,BX));
+    document.getElementById('wSh').onclick=()=>{ct.querySelectorAll('.char-answer').forEach(a=>a.classList.add('show'));document.getElementById('wSh').style.display='none';document.getElementById('wNx').style.display='';document.getElementById('wRt').style.display='';};
     document.getElementById('wNx').onclick=()=>{wR.push(true);wI++;showW();};
     document.getElementById('wRt').onclick=()=>{wR.push(false);wO.push(w);wI++;showW();};
     const dots=document.getElementById('wD');const st=Math.max(0,wR.length-19);for(let i=st;i<wR.length;i++){const d=document.createElement('div');d.className='w-dot '+(wR[i]?'done':'wrong');dots.appendChild(d);}const cu=document.createElement('div');cu.className='w-dot current';dots.appendChild(cu);
@@ -229,7 +243,7 @@ function showF(){
     const wc=new Set([cc]);const ac=[...new Set(allWords.flatMap(x=>[...x.word]))];
     while(wc.size<4){const r=ac[Math.floor(Math.random()*ac.length)];if(r!==cc)wc.add(r);}
     const opts=[...wc].sort(()=>Math.random()-.5);
-    ct.innerHTML=`<div class="fill-card"><div class="q-prog"><div class="q-prog-bar" style="width:${fI/fO.length*100}%"></div></div><div class="fill-illust">${w.svg}</div><div class="fill-hint">${w.hint}</div><div class="fill-word">${disp}</div><div style="font-size:.75rem;opacity:.35;margin-bottom:.7rem">邊個字填入空格？</div><div class="fill-opts" id="fO"></div><div class="quiz-score">第${fI+1}/${fO.length}題 · 答對${fS}</div></div>`;
+    ct.innerHTML=`<div class="fill-card"><div class="q-prog"><div class="q-prog-bar" style="width:${fI/fO.length*100}%"></div></div><div class="fill-illust">${w.svg}</div><div class="fill-hint">${w.hint}</div><div class="fill-word">${disp}</div><div style="font-size:.75rem;opacity:.35;margin-bottom:.7rem">哪個字填入空格？</div><div class="fill-opts" id="fO"></div><div class="quiz-score">第${fI+1}/${fO.length}題 · 答對${fS}</div></div>`;
     const g=document.getElementById('fO');
     opts.forEach(c=>{const b=document.createElement('button');b.className='fill-opt';b.textContent=c;b.onclick=()=>{g.querySelectorAll('.fill-opt').forEach(x=>{x.disabled=true;if(x.textContent===cc)x.classList.add('correct');});if(c===cc)fS++;else b.classList.add('wrong');setTimeout(()=>{fI++;showF();},800);};g.appendChild(b);});
 }
@@ -242,7 +256,7 @@ function showQ(){
     const ct=document.getElementById('panelQuiz');
     if(qI>=qO.length){showQR();return;}
     const w=qO[qI],wr=allWords.filter(x=>x.word!==w.word).sort(()=>Math.random()-.5).slice(0,3),opts=[w,...wr].sort(()=>Math.random()-.5);
-    ct.innerHTML=`<div class="quiz-card"><div class="q-prog"><div class="q-prog-bar" style="width:${qI/qO.length*100}%"></div></div><div class="quiz-illust">${w.svg}</div><div class="quiz-prompt">以上圖畫代表邊個詞語？</div><div class="quiz-opts" id="qO"></div><div class="quiz-score">第${qI+1}/${qO.length}題 · 答對${qS}</div></div>`;
+    ct.innerHTML=`<div class="quiz-card"><div class="q-prog"><div class="q-prog-bar" style="width:${qI/qO.length*100}%"></div></div><div class="quiz-illust">${w.svg}</div><div class="quiz-prompt">以上圖畫代表哪個詞語？</div><div class="quiz-opts" id="qO"></div><div class="quiz-score">第${qI+1}/${qO.length}題 · 答對${qS}</div></div>`;
     const g=document.getElementById('qO');
     opts.forEach(o=>{const b=document.createElement('button');b.className='quiz-opt';b.textContent=o.word;b.onclick=()=>{g.querySelectorAll('.quiz-opt').forEach(x=>{x.disabled=true;if(x.textContent===w.word)x.classList.add('correct');});if(o.word===w.word)qS++;else b.classList.add('wrong');setTimeout(()=>{qI++;showQ();},800);};g.appendChild(b);});
 }
