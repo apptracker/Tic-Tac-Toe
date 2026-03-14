@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>井字過三關 | 姚家遊戲區</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="nav.css">
+    <style>
+
+        .game-container {
+            background: var(--bg-card);
+            padding: 2rem;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .status {
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            min-height: 2rem;
+        }
+
+        .status .player-x { color: var(--accent-x); }
+        .status .player-o { color: var(--accent-o); }
+
+        .board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            width: 280px;
+            margin: 0 auto;
+        }
+
+        .cell {
+            aspect-ratio: 1;
+            background: var(--bg-dark);
+            border: 2px solid var(--grid-line);
+            border-radius: 12px;
+            font-size: 3rem;
+            font-weight: 900;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .cell:hover:not(.taken) {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: scale(1.02);
+        }
+
+        .cell.taken {
+            cursor: default;
+        }
+
+        .cell.x {
+            color: var(--accent-x);
+            text-shadow: 0 0 20px rgba(255, 107, 107, 0.3);
+            border-color: var(--accent-x);
+            background: rgba(255, 107, 107, 0.08);
+        }
+
+        .cell.o {
+            color: var(--accent-o);
+            text-shadow: 0 0 20px rgba(78, 205, 196, 0.3);
+            border-color: var(--accent-o);
+            background: rgba(78, 205, 196, 0.08);
+        }
+
+        .cell.winner {
+            animation: pulse 0.5s ease infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { box-shadow: 0 0 0 0 rgba(78, 205, 196, 0.4); }
+            to { box-shadow: 0 0 20px 5px rgba(78, 205, 196, 0.2); }
+        }
+
+        .cell.x.winner {
+            animation-name: pulse-x;
+        }
+
+        @keyframes pulse-x {
+            from { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.4); }
+            to { box-shadow: 0 0 20px 5px rgba(255, 107, 107, 0.2); }
+        }
+
+        .reset-btn {
+            margin-top: 1.5rem;
+            padding: 0.75rem 2rem;
+            font-size: 1rem;
+            font-weight: 700;
+            font-family: inherit;
+            background: linear-gradient(135deg, var(--accent-x), var(--accent-o));
+            border: none;
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .reset-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(255, 107, 107, 0.3);
+        }
+
+        .reset-btn:active {
+            transform: translateY(0);
+        }
+
+        .scores {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1.5rem;
+            font-size: 0.9rem;
+        }
+
+        .score {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .score-x { color: var(--accent-x); }
+        .score-o { color: var(--accent-o); }
+
+        .emoji-pickers {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+            justify-content: center;
+        }
+
+        .emoji-picker {
+            background: var(--bg-dark);
+            border: 2px solid var(--grid-line);
+            border-radius: 16px;
+            padding: 0.75rem;
+            width: 155px;
+            text-align: center;
+        }
+
+        .emoji-picker.picker-x { border-color: rgba(255, 107, 107, 0.3); }
+        .emoji-picker.picker-o { border-color: rgba(78, 205, 196, 0.3); }
+
+        .picker-label {
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            opacity: 0.7;
+        }
+
+        .picker-label.label-x { color: var(--accent-x); }
+        .picker-label.label-o { color: var(--accent-o); }
+
+        .current-emoji {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            cursor: pointer;
+            transition: transform 0.15s;
+            line-height: 1.2;
+        }
+
+        .current-emoji:hover { transform: scale(1.15); }
+
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 3px;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease, padding 0.3s ease;
+            padding: 0;
+        }
+
+        .emoji-grid.open {
+            max-height: 300px;
+            padding-top: 0.5rem;
+        }
+
+        .emoji-option {
+            font-size: 1.25rem;
+            padding: 4px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background 0.15s, transform 0.15s;
+            line-height: 1.3;
+        }
+
+        .emoji-option:hover {
+            background: rgba(255, 255, 255, 0.1);
+            transform: scale(1.2);
+        }
+
+        .emoji-option.selected {
+            background: rgba(255, 255, 255, 0.15);
+        }
+    </style>
+</head>
+<body>
+    <nav class="sidebar" id="sidebar">
+        <a class="sidebar-brand" href="index.html">姚家遊戲區</a>
+        <div class="sidebar-section">遊戲</div>
+        <ul class="sidebar-nav">
+            <li><a class="sidebar-link active" href="tictactoe.html"><span class="nav-emoji">🎮</span> 井字過三關</a></li>
+            <li><a class="sidebar-link" href="multiply.html"><span class="nav-emoji">✖️</span> 乘法大冒險</a></li>
+            <li><a class="sidebar-link" href="multiply-td.html"><span class="nav-emoji">🏰</span> 乘法守城戰</a></li>
+            <li><a class="sidebar-link" href="space.html"><span class="nav-emoji">🚀</span> 太空數學射擊</a></li>
+        </ul>
+        <div class="sidebar-section">學習</div>
+        <ul class="sidebar-nav">
+            <li><a class="sidebar-link" href="gs.html"><span class="nav-emoji">📖</span> 常識溫習</a></li>
+        </ul>
+        <div class="sidebar-footer">姚家遊戲區 © 2026</div>
+    </nav>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <div class="topbar"><button class="hamburger" id="menuOpen">☰</button><span class="topbar-title">姚家遊戲區</span></div>
+
+    <div class="main-content" style="justify-content:center;">
+    <div class="game-container">
+        <div class="emoji-pickers">
+            <div class="emoji-picker picker-x">
+                <div class="picker-label label-x">玩家 1</div>
+                <div class="current-emoji" id="currentX" title="點擊選擇">❌</div>
+                <div class="emoji-grid" id="gridX"></div>
+            </div>
+            <div class="emoji-picker picker-o">
+                <div class="picker-label label-o">玩家 2</div>
+                <div class="current-emoji" id="currentO" title="點擊選擇">⭕</div>
+                <div class="emoji-grid" id="gridO"></div>
+            </div>
+        </div>
+
+        <div class="status" id="status">輪到 <span class="player-x">❌</span> 下棋</div>
+
+        <div class="board" id="board">
+            <div class="cell" data-index="0"></div>
+            <div class="cell" data-index="1"></div>
+            <div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div>
+            <div class="cell" data-index="4"></div>
+            <div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div>
+            <div class="cell" data-index="7"></div>
+            <div class="cell" data-index="8"></div>
+        </div>
+
+        <button class="reset-btn" id="resetBtn">重新開始</button>
+
+        <div class="scores">
+            <span class="score score-x">❌: <strong id="scoreX">0</strong></span>
+            <span class="score score-o">⭕: <strong id="scoreO">0</strong></span>
+        </div>
+    </div>
+    </div>
+
+    <script src="nav.js"></script>
+    <script>
+        const WIN_PATTERNS = [
+            [0, 1, 2], [3, 4, 5], [6, 7, 8],
+            [0, 3, 6], [1, 4, 7], [2, 5, 8],
+            [0, 4, 8], [2, 4, 6]
+        ];
+
+        const EMOJI_OPTIONS = [
+            '🐱','🐶','🐰','🐻','🦊','🐸','🐷','🐵',
+            '🦁','🐯','🐮','🐼','🐨','🐧','🐔','🦄',
+            '🦋','🐙','🐳','🐬','🦀','🐢','🐝','🐞',
+            '😀','😎','🥳','😈','👻','🤖','👽','🎃',
+            '🔥','💎','⚡','🌟','🚀','🎯','⚽','🏀',
+            '🍎','🍕','🍦','🍩','🌈','🎵','💖','🌸',
+        ];
+
+        let board = ['', '', '', '', '', '', '', '', ''];
+        let currentPlayer = 'X';
+        let gameOver = false;
+        let scores = { X: 0, O: 0 };
+        let emojis = { X: '❌', O: '⭕' };
+        let firstMover = 'X';
+
+        const statusEl = document.getElementById('status');
+        const boardEl = document.getElementById('board');
+        const resetBtn = document.getElementById('resetBtn');
+        const scoreXEl = document.getElementById('scoreX');
+        const scoreOEl = document.getElementById('scoreO');
+        const currentXEl = document.getElementById('currentX');
+        const currentOEl = document.getElementById('currentO');
+        const gridXEl = document.getElementById('gridX');
+        const gridOEl = document.getElementById('gridO');
+
+        function buildEmojiGrid(gridEl, player) {
+            gridEl.innerHTML = '';
+            EMOJI_OPTIONS.forEach(em => {
+                const span = document.createElement('span');
+                span.className = 'emoji-option' + (emojis[player] === em ? ' selected' : '');
+                span.textContent = em;
+                span.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    emojis[player] = em;
+                    if (player === 'X') currentXEl.textContent = em;
+                    else currentOEl.textContent = em;
+                    gridEl.querySelectorAll('.emoji-option').forEach(s => s.classList.remove('selected'));
+                    span.classList.add('selected');
+                    refreshBoard();
+                    updateStatus();
+                    updateScoreLabels();
+                    gridEl.classList.remove('open');
+                });
+                gridEl.appendChild(span);
+            });
+        }
+
+        function toggleGrid(gridEl) {
+            const isOpen = gridEl.classList.contains('open');
+            gridXEl.classList.remove('open');
+            gridOEl.classList.remove('open');
+            if (!isOpen) gridEl.classList.add('open');
+        }
+
+        currentXEl.addEventListener('click', () => toggleGrid(gridXEl));
+        currentOEl.addEventListener('click', () => toggleGrid(gridOEl));
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.emoji-picker')) {
+                gridXEl.classList.remove('open');
+                gridOEl.classList.remove('open');
+            }
+        });
+
+        buildEmojiGrid(gridXEl, 'X');
+        buildEmojiGrid(gridOEl, 'O');
+
+        function refreshBoard() {
+            document.querySelectorAll('.cell').forEach((cell, i) => {
+                if (board[i]) cell.textContent = emojis[board[i]];
+            });
+        }
+
+        function updateScoreLabels() {
+            scoreXEl.parentElement.childNodes[0].textContent = emojis.X + ': ';
+            scoreOEl.parentElement.childNodes[0].textContent = emojis.O + ': ';
+        }
+
+        function checkWinner() {
+            for (const [a, b, c] of WIN_PATTERNS) {
+                if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+                    return { winner: board[a], line: [a, b, c] };
+                }
+            }
+            if (board.every(cell => cell)) return { winner: 'draw' };
+            return null;
+        }
+
+        function updateStatus(result) {
+            if (result) {
+                if (result.winner === 'draw') {
+                    statusEl.innerHTML = '和局！';
+                } else {
+                    const cls = result.winner === 'X' ? 'player-x' : 'player-o';
+                    statusEl.innerHTML = `<span class="${cls}">${emojis[result.winner]}</span> 獲勝！`;
+                    scores[result.winner]++;
+                    scoreXEl.textContent = scores.X;
+                    scoreOEl.textContent = scores.O;
+                }
+                gameOver = true;
+            } else {
+                const playerClass = currentPlayer === 'X' ? 'player-x' : 'player-o';
+                statusEl.innerHTML = `輪到 <span class="${playerClass}">${emojis[currentPlayer]}</span> 下棋`;
+            }
+        }
+
+        function highlightWinner(line) {
+            line.forEach(i => boardEl.children[i].classList.add('winner'));
+        }
+
+        function handleCellClick(e) {
+            const cell = e.target;
+            if (!cell.classList.contains('cell')) return;
+            if (cell.classList.contains('taken') || gameOver) return;
+
+            const index = parseInt(cell.dataset.index);
+            board[index] = currentPlayer;
+            cell.textContent = emojis[currentPlayer];
+            cell.classList.add('taken', currentPlayer.toLowerCase());
+
+            const result = checkWinner();
+            if (result) {
+                if (result.line) highlightWinner(result.line);
+                updateStatus(result);
+            } else {
+                currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+                updateStatus();
+            }
+        }
+
+        function reset() {
+            board = ['', '', '', '', '', '', '', '', ''];
+            firstMover = firstMover === 'X' ? 'O' : 'X';
+            currentPlayer = firstMover;
+            gameOver = false;
+
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.textContent = '';
+                cell.classList.remove('taken', 'x', 'o', 'winner');
+            });
+
+            updateStatus();
+        }
+
+        boardEl.addEventListener('click', handleCellClick);
+        resetBtn.addEventListener('click', reset);
+
+        updateScoreLabels();
+        updateStatus();
+    </script>
+</body>
+</html>
