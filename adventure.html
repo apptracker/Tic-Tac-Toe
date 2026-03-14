@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>魔法探險 · 解謎學習</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0e1a;
+            --bg-card: #141b2d;
+            --accent: #7dd3fc;
+            --accent-warm: #fbbf24;
+            --success: #34d399;
+            --danger: #f87171;
+            --text: #e2e8f0;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            min-height: 100vh;
+            background: var(--bg-dark);
+            background-image: radial-gradient(ellipse at 50% 0%, rgba(125, 211, 252, 0.15) 0%, transparent 50%);
+            color: var(--text);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+        }
+
+        .back-link {
+            position: fixed;
+            top: 1rem;
+            left: 1rem;
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 700;
+            opacity: 0.9;
+        }
+        .back-link:hover { opacity: 1; text-decoration: underline; }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 900;
+            margin: 1rem 0 0.5rem;
+            background: linear-gradient(135deg, var(--accent), var(--accent-warm));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .subtitle { font-size: 0.95rem; opacity: 0.8; margin-bottom: 1.5rem; }
+
+        /* 地圖選擇 */
+        .map-select {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+            gap: 1rem;
+            max-width: 600px;
+            margin-bottom: 1.5rem;
+        }
+
+        .map-btn {
+            padding: 1.25rem;
+            border-radius: 16px;
+            border: 2px solid rgba(255,255,255,0.1);
+            background: var(--bg-card);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .map-btn:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(125, 211, 252, 0.2);
+        }
+
+        .map-btn .emoji { font-size: 2.5rem; }
+
+        /* 難度選擇 */
+        .difficulty-select {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .diff-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            border: 2px solid rgba(255,255,255,0.15);
+            background: var(--bg-card);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .diff-btn.active, .diff-btn:hover {
+            border-color: var(--accent-warm);
+            background: rgba(251, 191, 36, 0.15);
+        }
+
+        /* 遊戲區域 */
+        .game-area {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 500px;
+        }
+
+        .game-area.active { display: flex; }
+
+        .map-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .level-info {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            margin-bottom: 1rem;
+        }
+
+        .map-grid {
+            display: grid;
+            gap: 4px;
+            padding: 1rem;
+            background: var(--bg-card);
+            border-radius: 20px;
+            border: 2px solid rgba(255,255,255,0.08);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .tile {
+            width: 48px;
+            height: 48px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid rgba(255,255,255,0.06);
+            transition: all 0.2s;
+        }
+
+        .tile.path { background: rgba(125, 211, 252, 0.15); }
+        .tile.goal { background: rgba(251, 191, 36, 0.2); border-color: var(--accent-warm); }
+        .tile.goal.solved { background: rgba(52, 211, 153, 0.2); }
+        .tile.player { background: linear-gradient(135deg, var(--accent), #38bdf8); box-shadow: 0 0 15px rgba(125, 211, 252, 0.5); }
+
+        .controls {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .ctrl-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            border: 2px solid rgba(255,255,255,0.2);
+            background: var(--bg-card);
+            color: var(--text);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .ctrl-btn:hover { border-color: var(--accent); transform: scale(1.05); }
+
+        /* 謎題彈窗 */
+        .puzzle-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .puzzle-overlay.active { display: flex; }
+
+        .puzzle-box {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 100%;
+            border: 2px solid rgba(125, 211, 252, 0.3);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        }
+
+        .puzzle-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            color: var(--accent);
+        }
+
+        .puzzle-question {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            line-height: 1.4;
+        }
+
+        .puzzle-options {
+            display: grid;
+            gap: 0.75rem;
+        }
+
+        .puzzle-option {
+            padding: 1rem 1.25rem;
+            border-radius: 12px;
+            border: 2px solid rgba(255,255,255,0.15);
+            background: rgba(30, 41, 59, 0.6);
+            color: var(--text);
+            font-family: inherit;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .puzzle-option:hover { border-color: var(--accent); background: rgba(125, 211, 252, 0.1); }
+        .puzzle-option.correct { border-color: var(--success); background: rgba(52, 211, 153, 0.2); }
+        .puzzle-option.wrong { border-color: var(--danger); background: rgba(248, 113, 113, 0.15); opacity: 0.7; }
+
+        .puzzle-feedback {
+            margin-top: 1rem;
+            font-size: 1.1rem;
+            font-weight: 700;
+            text-align: center;
+            display: none;
+        }
+
+        .puzzle-feedback.show { display: block; }
+        .puzzle-feedback.success { color: var(--success); }
+        .puzzle-feedback.fail { color: var(--danger); }
+
+        /* 過關慶祝 */
+        .celebration {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 101;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 1rem;
+            padding: 1rem;
+        }
+
+        .celebration.active { display: flex; }
+
+        .celebration-emoji { font-size: 4rem; animation: bounce 0.5s ease infinite alternate; }
+        @keyframes bounce { from { transform: scale(1); } to { transform: scale(1.2); } }
+
+        .celebration-text { font-size: 1.5rem; font-weight: 900; color: var(--accent-warm); }
+
+        .next-btn {
+            padding: 0.75rem 2rem;
+            border-radius: 12px;
+            border: none;
+            background: linear-gradient(135deg, var(--accent), var(--accent-warm));
+            color: #0a0e1a;
+            font-family: inherit;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .next-btn:hover { transform: scale(1.05); }
+    </style>
+</head>
+<body>
+    <a href="index.html" class="back-link">← 返回遊戲選單</a>
+
+    <h1>魔法探險</h1>
+    <p class="subtitle">解謎學習 · 闖關冒險</p>
+
+    <div class="difficulty-select">
+        <button class="diff-btn active" data-diff="easy">5歲 · 簡單</button>
+        <button class="diff-btn" data-diff="medium">6-7歲 · 中等</button>
+        <button class="diff-btn" data-diff="hard">8歲 · 挑戰</button>
+    </div>
+
+    <div class="map-select">
+        <button class="map-btn" data-map="forest">
+            <span class="emoji">🌲</span>
+            <span>神秘森林</span>
+        </button>
+        <button class="map-btn" data-map="ocean">
+            <span class="emoji">🐠</span>
+            <span>海底世界</span>
+        </button>
+        <button class="map-btn" data-map="space">
+            <span class="emoji">🚀</span>
+            <span>太空站</span>
+        </button>
+        <button class="map-btn" data-map="dino">
+            <span class="emoji">🦕</span>
+            <span>恐龍島</span>
+        </button>
+    </div>
+
+    <div class="game-area" id="gameArea">
+        <div class="map-title" id="mapTitle"></div>
+        <div class="level-info" id="levelInfo">第 1 關 · 完成任務開門！</div>
+        <button class="diff-btn" id="backToMaps" style="margin-bottom:0.5rem;">換地圖</button>
+        <div class="map-grid" id="mapGrid"></div>
+        <div class="controls">
+            <button class="ctrl-btn" data-dir="up">⬆️</button>
+            <div style="display:flex;gap:0.5rem;">
+                <button class="ctrl-btn" data-dir="left">⬅️</button>
+                <button class="ctrl-btn" data-dir="down">⬇️</button>
+                <button class="ctrl-btn" data-dir="right">➡️</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="puzzle-overlay" id="puzzleOverlay">
+        <div class="puzzle-box">
+            <div class="puzzle-title" id="puzzleCategory"></div>
+            <div class="puzzle-question" id="puzzleQuestion"></div>
+            <div class="puzzle-options" id="puzzleOptions"></div>
+            <div class="puzzle-feedback" id="puzzleFeedback"></div>
+        </div>
+    </div>
+
+    <div class="celebration" id="celebration">
+        <span class="celebration-emoji">🎉</span>
+        <span class="celebration-text" id="celebrationText">完成任務！</span>
+        <button class="next-btn" id="nextBtn">繼續探險</button>
+    </div>
+
+    <script>
+        const MAP_NAMES = { forest: '神秘森林', ocean: '海底世界', space: '太空站', dino: '恐龍島' };
+        const MAP_EMOJIS = { forest: '🌲', ocean: '🐠', space: '🚀', dino: '🦕' };
+
+        const PUZZLES = {
+            easy: [
+                { cat: '數學 · 數數', q: '圖中有幾隻小鳥？', opts: ['2 隻', '3 隻', '4 隻', '5 隻'], ans: 1 },
+                { cat: '常識 · 顏色', q: '揀出「紅色」的物件', opts: ['🍎 蘋果', '🍌 香蕉', '🍋 檸檬', '🥦 西蘭花'], ans: 0 },
+                { cat: '常識 · 動物', q: '邊種動物會飛？', opts: ['🐕 狗', '🐦 鳥', '🐟 魚', '🐢 龜'], ans: 1 },
+                { cat: '數學 · 比較', q: '邊個數字最大？', opts: ['3', '7', '5', '2'], ans: 1 },
+                { cat: '中文 · 認字', q: '「大」嘅相反係？', opts: ['多', '小', '高', '長'], ans: 1 },
+                { cat: '常識 · 交通工具', q: '邊種可以喺天上飛？', opts: ['🚗 汽車', '✈️ 飛機', '🚢 船', '🚲 單車'], ans: 1 },
+                { cat: '數學 · 圖形', q: '揀出「圓形」', opts: ['⬜ 正方形', '🔺 三角形', '⭕ 圓形', '📐 長方形'], ans: 2 },
+                { cat: '常識 · 身體', q: '我哋用邊度睇嘢？', opts: ['👂 耳朵', '👃 鼻子', '👀 眼睛', '👄 嘴巴'], ans: 2 },
+            ],
+            medium: [
+                { cat: '數學 · 加法', q: '3 + 5 = ?', opts: ['6', '7', '8', '9'], ans: 2 },
+                { cat: '數學 · 減法', q: '10 - 4 = ?', opts: ['5', '6', '7', '8'], ans: 1 },
+                { cat: '中文 · 詞語', q: '「太陽」同邊個係一對？', opts: ['星星', '月亮', '雲朵', '彩虹'], ans: 1 },
+                { cat: '常識 · 天氣', q: '落雨嘅時候要帶咩？', opts: ['太陽眼鏡', '雨傘', '風箏', '雪糕'], ans: 1 },
+                { cat: '數學 · 比較', q: '15 同 12 邊個大？', opts: ['一樣', '12', '15', '唔知'], ans: 2 },
+                { cat: '常識 · 動物', q: '邊種動物住喺水入面？', opts: ['🐰 兔', '🐸 青蛙', '🐔 雞', '🐶 狗'], ans: 1 },
+                { cat: '數學 · 數數', q: '7 + 3 = ?', opts: ['9', '10', '11', '12'], ans: 1 },
+                { cat: '中文 · 認字', q: '「開心」嘅意思接近？', opts: ['傷心', '快樂', '嬲', '驚'], ans: 1 },
+            ],
+            hard: [
+                { cat: '數學 · 加法', q: '12 + 8 = ?', opts: ['18', '19', '20', '21'], ans: 2 },
+                { cat: '數學 · 減法', q: '18 - 9 = ?', opts: ['7', '8', '9', '10'], ans: 2 },
+                { cat: '常識 · 科學', q: '揀出「會漂浮喺水上」嘅物件', opts: ['石頭', '鐵釘', '木頭', '玻璃珠'], ans: 2 },
+                { cat: '中文 · 詞語', q: '「早晨」係咩時候講？', opts: ['夜晚', '中午', '早上', '下午'], ans: 2 },
+                { cat: '數學 · 比較', q: '邊個數喺 20 同 25 中間？', opts: ['18', '22', '26', '30'], ans: 1 },
+                { cat: '常識 · 自然', q: '植物生長最需要咩？', opts: ['冰', '陽光', '石頭', '膠袋'], ans: 1 },
+                { cat: '數學 · 應用', q: '小明有 5 粒糖，媽咪再俾 7 粒，一共有幾粒？', opts: ['11', '12', '13', '14'], ans: 1 },
+                { cat: '常識 · 邏輯', q: '冬天會落咩？', opts: ['雨', '雪', '冰雹', 'B 和 C 都可能'], ans: 3 },
+            ],
+        };
+
+        let state = {
+            map: null,
+            difficulty: 'easy',
+            playerPos: { r: 0, c: 0 },
+            level: 1,
+            goals: [],
+            usedPuzzles: new Set(),
+        };
+
+        const ROWS = 5, COLS = 5;
+
+        function initMap() {
+            state.playerPos = { r: 0, c: 0 };
+            state.goals = [];
+            const grid = document.getElementById('mapGrid');
+            grid.innerHTML = '';
+            grid.style.gridTemplateColumns = `repeat(${COLS}, 48px)`;
+
+            for (let r = 0; r < ROWS; r++) {
+                for (let c = 0; c < COLS; c++) {
+                    const tile = document.createElement('div');
+                    tile.className = 'tile path';
+                    tile.dataset.r = r;
+                    tile.dataset.c = c;
+                    let emoji = '🟫';
+                    if (r === 0 && c === 0) {
+                        emoji = '🧙';
+                        tile.classList.add('player');
+                    } else if ((r === ROWS - 1 && c === COLS - 1) || (r === 2 && c === 2)) {
+                        const goals = ['🚪', '📦', '🐣'];
+                        emoji = goals[state.goals.length % 3];
+                        tile.classList.add('goal');
+                        state.goals.push({ r, c });
+                    }
+                    tile.textContent = emoji;
+                    grid.appendChild(tile);
+                }
+            }
+
+            document.getElementById('mapTitle').textContent = MAP_NAMES[state.map] + ' ' + MAP_EMOJIS[state.map];
+            document.getElementById('levelInfo').textContent = `第 ${state.level} 關 · 完成任務開門！`;
+        }
+
+        function getTile(r, c) {
+            return document.querySelector(`.tile[data-r="${r}"][data-c="${c}"]`);
+        }
+
+        function movePlayer(dr, dc) {
+            const nr = state.playerPos.r + dr;
+            const nc = state.playerPos.c + dc;
+            if (nr < 0 || nr >= ROWS || nc < 0 || nc >= COLS) return;
+
+            const isGoal = state.goals.some(g => g.r === nr && g.c === nc);
+            const goalTile = state.goals.find(g => g.r === nr && g.c === nc);
+            const tile = getTile(nr, nc);
+            if (tile && tile.classList.contains('solved')) {
+                // 已解謎，可以通過
+            } else if (isGoal && goalTile) {
+                showPuzzle(goalTile);
+                return;
+            }
+
+            getTile(state.playerPos.r, state.playerPos.c).classList.remove('player');
+            getTile(state.playerPos.r, state.playerPos.c).textContent = '🟫';
+            state.playerPos = { r: nr, c: nc };
+            const newTile = getTile(nr, nc);
+            newTile.classList.add('player');
+            newTile.textContent = '🧙';
+        }
+
+        function getRandomPuzzle() {
+            const pool = PUZZLES[state.difficulty];
+            let idx = Math.floor(Math.random() * pool.length);
+            const key = `${state.difficulty}-${idx}`;
+            if (state.usedPuzzles.size >= pool.length) state.usedPuzzles.clear();
+            while (state.usedPuzzles.has(key)) {
+                idx = (idx + 1) % pool.length;
+            }
+            state.usedPuzzles.add(key);
+            return pool[idx];
+        }
+
+        function showPuzzle(goalTile) {
+            const p = getRandomPuzzle();
+            document.getElementById('puzzleCategory').textContent = p.cat;
+            document.getElementById('puzzleQuestion').textContent = p.q;
+            const optsEl = document.getElementById('puzzleOptions');
+            optsEl.innerHTML = '';
+            document.getElementById('puzzleFeedback').classList.remove('show');
+
+            p.opts.forEach((opt, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'puzzle-option';
+                btn.textContent = opt;
+                btn.onclick = () => checkAnswer(i === p.ans, btn, p.opts, p.ans, goalTile);
+                optsEl.appendChild(btn);
+            });
+
+            document.getElementById('puzzleOverlay').classList.add('active');
+        }
+
+        function checkAnswer(correct, btn, opts, ansIdx, goalTile) {
+            document.querySelectorAll('.puzzle-option').forEach(b => { b.style.pointerEvents = 'none'; });
+            document.querySelectorAll('.puzzle-option').forEach((b, i) => {
+                if (i === ansIdx) b.classList.add('correct');
+                else if (b === btn && !correct) b.classList.add('wrong');
+            });
+
+            const feedback = document.getElementById('puzzleFeedback');
+            feedback.classList.add('show');
+            if (correct) {
+                feedback.textContent = '✅ 答啱！好叻！';
+                feedback.classList.add('success');
+                feedback.classList.remove('fail');
+                setTimeout(() => {
+                    document.getElementById('puzzleOverlay').classList.remove('active');
+                    const tile = getTile(goalTile.r, goalTile.c);
+                    tile.classList.add('solved');
+                    tile.textContent = '✨';
+                    showCelebration();
+                }, 800);
+            } else {
+                feedback.textContent = '再試一次！';
+                feedback.classList.add('fail');
+                feedback.classList.remove('success');
+                setTimeout(() => {
+                    document.getElementById('puzzleOverlay').classList.remove('active');
+                }, 1200);
+            }
+        }
+
+        function showCelebration() {
+            const msgs = ['完成任務！', '好叻！', '闖關成功！', '繼續加油！'];
+            document.getElementById('celebrationText').textContent = msgs[Math.floor(Math.random() * msgs.length)];
+            document.getElementById('celebration').classList.add('active');
+        }
+
+        document.getElementById('nextBtn').onclick = () => {
+            document.getElementById('celebration').classList.remove('active');
+            state.level++;
+            initMap();
+        };
+
+        document.querySelectorAll('.map-btn').forEach(btn => {
+            btn.onclick = () => {
+                state.map = btn.dataset.map;
+                state.level = 1;
+                state.usedPuzzles.clear();
+                document.querySelector('.map-select').style.display = 'none';
+                document.getElementById('gameArea').classList.add('active');
+                initMap();
+            };
+        });
+
+        document.getElementById('backToMaps').onclick = () => {
+            document.getElementById('gameArea').classList.remove('active');
+            document.querySelector('.map-select').style.display = 'grid';
+        };
+
+        document.querySelectorAll('.diff-btn').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.diff-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                state.difficulty = btn.dataset.diff;
+            };
+        });
+
+        document.querySelectorAll('.ctrl-btn').forEach(btn => {
+            btn.onclick = () => {
+                const d = btn.dataset.dir;
+                if (d === 'up') movePlayer(-1, 0);
+                if (d === 'down') movePlayer(1, 0);
+                if (d === 'left') movePlayer(0, -1);
+                if (d === 'right') movePlayer(0, 1);
+            };
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (document.getElementById('puzzleOverlay').classList.contains('active')) return;
+            if (e.key === 'ArrowUp') movePlayer(-1, 0);
+            if (e.key === 'ArrowDown') movePlayer(1, 0);
+            if (e.key === 'ArrowLeft') movePlayer(0, -1);
+            if (e.key === 'ArrowRight') movePlayer(0, 1);
+        });
+    </script>
+</body>
+</html>
