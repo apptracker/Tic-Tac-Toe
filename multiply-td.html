@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>乘法守城戰</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0f0f1a;
+            --bg-card: #1a1a2e;
+            --accent-x: #ff6b6b;
+            --accent-o: #4ecdc4;
+            --accent-gold: #ffd93d;
+            --accent-purple: #a855f7;
+            --text: #eaeaea;
+            --grid-line: #2d2d44;
+            --nav-height: 56px;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family:'Noto Sans TC',sans-serif;
+            min-height:100vh; background:var(--bg-dark);
+            display:flex; flex-direction:column; color:var(--text);
+            overflow-x:hidden;
+        }
+
+        /* Navbar */
+        .navbar { width:100%; height:var(--nav-height); background:rgba(15,15,26,.95); backdrop-filter:blur(12px); border-bottom:1px solid rgba(255,255,255,.06); display:flex; align-items:center; padding:0 1.5rem; position:sticky; top:0; z-index:100; }
+        .nav-brand { font-size:1.2rem; font-weight:900; background:linear-gradient(135deg,var(--accent-x),var(--accent-o)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-right:2rem; text-decoration:none; }
+        .nav-items { display:flex; gap:.25rem; list-style:none; }
+        .nav-item { padding:.5rem 1rem; border-radius:10px; font-size:.9rem; font-weight:700; color:rgba(234,234,234,.5); cursor:pointer; transition:background .2s,color .2s; text-decoration:none; display:flex; align-items:center; gap:.4rem; }
+        .nav-item:hover { background:rgba(255,255,255,.06); color:var(--text); }
+        .nav-item.active { background:rgba(255,255,255,.08); color:var(--text); }
+
+        .page-content { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:1rem; }
+        .screen { display:none; width:100%; max-width:700px; }
+        .screen.active { display:block; }
+
+        /* ── START ── */
+        .start-card { background:var(--bg-card); border-radius:24px; padding:2.5rem; box-shadow:0 25px 50px -12px rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.05); text-align:center; }
+        .td-title { font-size:2.5rem; font-weight:900; background:linear-gradient(135deg,#ffd93d,#ff6b6b,#a855f7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; margin-bottom:.3rem; }
+        .td-sub { opacity:.6; margin-bottom:2rem; }
+        .table-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:8px; margin-bottom:1.5rem; text-align:left; }
+        .tbl-btn { padding:.55rem; border-radius:10px; border:2px solid var(--grid-line); background:var(--bg-dark); color:var(--text); font-family:inherit; font-size:.9rem; font-weight:700; cursor:pointer; transition:all .15s; text-align:center; }
+        .tbl-btn:hover { border-color:rgba(255,255,255,.2); transform:scale(1.06); }
+        .tbl-btn.selected { border-color:var(--accent-gold); background:rgba(255,217,61,.12); color:var(--accent-gold); }
+        .section-label { font-size:.8rem; font-weight:700; opacity:.5; margin-bottom:.6rem; text-align:left; }
+        .go-btn { width:100%; padding:1rem; font-size:1.15rem; font-weight:900; font-family:inherit; background:linear-gradient(135deg,var(--accent-gold),var(--accent-x),var(--accent-purple)); border:none; border-radius:14px; color:#fff; cursor:pointer; transition:transform .2s,box-shadow .2s; margin-top:.5rem; }
+        .go-btn:hover { transform:translateY(-2px); box-shadow:0 10px 30px rgba(255,107,107,.3); }
+        .go-btn:disabled { opacity:.35; cursor:default; transform:none; box-shadow:none; }
+
+        /* ── GAME ── */
+        .game-wrapper { background:var(--bg-card); border-radius:20px; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.05); }
+
+        /* HUD */
+        .hud { display:flex; justify-content:space-between; align-items:center; padding:.8rem 1.2rem; background:rgba(0,0,0,.3); border-bottom:1px solid rgba(255,255,255,.05); }
+        .hud-item { text-align:center; }
+        .hud-lbl { font-size:.65rem; opacity:.5; font-weight:700; text-transform:uppercase; }
+        .hud-val { font-size:1.1rem; font-weight:900; }
+        .hud-val.gold { color:var(--accent-gold); }
+        .hud-val.wave { color:var(--accent-o); }
+        .hud-val.score { color:var(--accent-purple); }
+
+        /* Battlefield */
+        .battlefield {
+            position:relative; width:100%; height:220px;
+            background: linear-gradient(180deg, #0a1628 0%, #162040 40%, #1a3a20 70%, #1a3a20 100%);
+            overflow:hidden;
+        }
+        .ground { position:absolute; bottom:0; width:100%; height:70px; background:linear-gradient(180deg,#2d5a27,#1e4d1a); border-top:2px solid #3a7a30; }
+        .road { position:absolute; bottom:22px; width:100%; height:28px; background:rgba(80,60,40,.6); border-top:2px dashed rgba(255,255,255,.08); border-bottom:2px dashed rgba(255,255,255,.08); }
+
+        /* Stars */
+        .stars { position:absolute; top:0; left:0; width:100%; height:150px; }
+        .star { position:absolute; width:2px; height:2px; background:#fff; border-radius:50%; animation:twinkle 3s infinite; }
+        @keyframes twinkle { 0%,100%{opacity:.3} 50%{opacity:1} }
+
+        /* Castle */
+        .castle {
+            position:absolute; bottom:32px; left:12px; z-index:10;
+            font-size:3rem; filter:drop-shadow(0 0 10px rgba(78,205,196,.3));
+            transition: filter .3s;
+        }
+        .castle.damaged { filter:drop-shadow(0 0 10px rgba(255,107,107,.5)) saturate(.7); }
+        .castle-hp-bg { position:absolute; bottom:90px; left:8px; width:56px; height:6px; background:rgba(0,0,0,.5); border-radius:3px; z-index:11; }
+        .castle-hp { height:100%; border-radius:3px; background:linear-gradient(90deg,var(--accent-o),#6ee7b7); transition:width .3s; }
+        .castle-hp.low { background:linear-gradient(90deg,var(--accent-x),#fca5a5); }
+
+        /* Monsters */
+        .monster {
+            position:absolute; bottom:35px; font-size:2.2rem; z-index:5;
+            transition: left .1s linear; filter:drop-shadow(0 2px 4px rgba(0,0,0,.5));
+        }
+        .monster.hit { animation:mhit .25s ease; }
+        @keyframes mhit { 0%{filter:brightness(3) drop-shadow(0 0 10px #fff)} 100%{filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))} }
+        .monster.dying { animation:mdie .4s ease forwards; }
+        @keyframes mdie { to { transform:scale(0) rotate(180deg); opacity:0; } }
+
+        .monster .m-hp-bg { position:absolute; top:-8px; left:50%; transform:translateX(-50%); width:36px; height:4px; background:rgba(0,0,0,.5); border-radius:2px; }
+        .monster .m-hp { height:100%; border-radius:2px; background:var(--accent-x); transition:width .2s; }
+        .monster.boss { font-size:3rem; }
+        .monster.boss .m-hp-bg { width:50px; height:5px; }
+
+        /* Projectile */
+        .projectile {
+            position:absolute; bottom:55px; left:70px; font-size:1.2rem; z-index:8;
+            pointer-events:none;
+        }
+
+        /* Wave banner */
+        .wave-banner {
+            position:absolute; top:50%; left:50%; transform:translate(-50%,-50%) scale(0);
+            font-size:1.8rem; font-weight:900; color:var(--accent-gold);
+            text-shadow:0 0 30px rgba(255,217,61,.5),0 2px 4px rgba(0,0,0,.8);
+            z-index:20; white-space:nowrap; pointer-events:none;
+        }
+        .wave-banner.show { animation:bannerIn .8s ease forwards; }
+        @keyframes bannerIn { 0%{transform:translate(-50%,-50%) scale(0); opacity:0} 40%{transform:translate(-50%,-50%) scale(1.2); opacity:1} 60%{transform:translate(-50%,-50%) scale(1); opacity:1} 100%{transform:translate(-50%,-50%) scale(.9); opacity:0} }
+
+        /* Impact */
+        .impact { position:absolute; font-size:1.5rem; z-index:9; pointer-events:none; animation:impactAnim .5s ease forwards; }
+        @keyframes impactAnim { 0%{transform:scale(0);opacity:1} 50%{transform:scale(1.3);opacity:1} 100%{transform:scale(.5);opacity:0} }
+
+        /* Damage number */
+        .dmg-num { position:absolute; font-size:.9rem; font-weight:900; z-index:12; pointer-events:none; animation:dmgFloat .8s ease forwards; }
+        @keyframes dmgFloat { 0%{opacity:1;transform:translateY(0)} 100%{opacity:0;transform:translateY(-40px)} }
+
+        /* ── Question Panel ── */
+        .q-panel { padding:1.2rem; background:rgba(0,0,0,.25); }
+        .q-text { text-align:center; font-size:2rem; font-weight:900; margin-bottom:.8rem; min-height:2.5rem; }
+        .q-text .op { color:var(--accent-gold); }
+        .ans-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:.6rem; }
+        .ans-btn {
+            padding:.7rem .4rem; font-size:1.15rem; font-weight:900; font-family:inherit;
+            background:var(--bg-dark); border:2px solid var(--grid-line); border-radius:12px;
+            color:var(--text); cursor:pointer; transition:all .12s;
+        }
+        .ans-btn:hover:not(:disabled) { border-color:rgba(255,255,255,.3); transform:scale(1.04); background:rgba(255,255,255,.04); }
+        .ans-btn.correct { border-color:var(--accent-o); background:rgba(78,205,196,.15); color:var(--accent-o); }
+        .ans-btn.wrong { border-color:var(--accent-x); background:rgba(255,107,107,.15); color:var(--accent-x); animation:shake .3s; }
+        .ans-btn:disabled { cursor:default; opacity:.7; }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-3px)} 75%{transform:translateX(3px)} }
+
+        .combo-bar { display:flex; align-items:center; gap:.6rem; justify-content:center; }
+        .combo-lbl { font-size:.75rem; opacity:.5; }
+        .combo-count { font-weight:900; color:var(--accent-purple); font-size:1rem; min-width:2rem; text-align:center; }
+        .skill-btn {
+            padding:.4rem .8rem; font-size:.8rem; font-weight:700; font-family:inherit;
+            border:2px solid var(--grid-line); border-radius:10px; background:var(--bg-dark);
+            color:var(--text); cursor:pointer; transition:all .15s;
+        }
+        .skill-btn:hover:not(:disabled) { border-color:var(--accent-gold); background:rgba(255,217,61,.1); }
+        .skill-btn:disabled { opacity:.3; cursor:default; }
+        .skill-btn.ready { border-color:var(--accent-gold); color:var(--accent-gold); animation:glow 1s ease infinite alternate; }
+        @keyframes glow { from{box-shadow:0 0 5px rgba(255,217,61,.2)} to{box-shadow:0 0 15px rgba(255,217,61,.4)} }
+
+        /* ── Shop ── */
+        .shop-card { background:var(--bg-card); border-radius:24px; padding:2rem; box-shadow:0 25px 50px -12px rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.05); }
+        .shop-title { text-align:center; font-size:1.5rem; font-weight:900; margin-bottom:.3rem; color:var(--accent-gold); }
+        .shop-sub { text-align:center; font-size:.85rem; opacity:.5; margin-bottom:1.2rem; }
+        .shop-gold { text-align:center; font-size:1.1rem; font-weight:900; color:var(--accent-gold); margin-bottom:1rem; }
+        .shop-items { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:1.2rem; }
+        .shop-item {
+            background:var(--bg-dark); border:2px solid var(--grid-line); border-radius:14px;
+            padding:1rem; text-align:center; cursor:pointer; transition:all .15s;
+        }
+        .shop-item:hover:not(.sold) { border-color:rgba(255,255,255,.2); transform:scale(1.02); }
+        .shop-item.sold { opacity:.4; cursor:default; }
+        .shop-item .si-icon { font-size:1.8rem; margin-bottom:.3rem; }
+        .shop-item .si-name { font-size:.85rem; font-weight:700; margin-bottom:.2rem; }
+        .shop-item .si-desc { font-size:.7rem; opacity:.5; margin-bottom:.4rem; }
+        .shop-item .si-cost { font-size:.85rem; font-weight:900; color:var(--accent-gold); }
+        .next-wave-btn { width:100%; padding:1rem; font-size:1.1rem; font-weight:900; font-family:inherit; background:linear-gradient(135deg,var(--accent-o),var(--accent-purple)); border:none; border-radius:14px; color:#fff; cursor:pointer; transition:transform .2s; }
+        .next-wave-btn:hover { transform:translateY(-2px); box-shadow:0 10px 25px rgba(168,85,247,.3); }
+
+        /* ── Result ── */
+        .result-card { background:var(--bg-card); border-radius:24px; padding:2.5rem; box-shadow:0 25px 50px -12px rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.05); text-align:center; }
+        .r-title { font-size:2rem; font-weight:900; margin-bottom:.5rem; }
+        .r-stars { font-size:3rem; margin:1rem 0; }
+        .r-stats { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin:1.5rem 0; }
+        .r-stat { background:var(--bg-dark); border-radius:12px; padding:.8rem; }
+        .r-stat-v { font-size:1.3rem; font-weight:900; color:var(--accent-gold); }
+        .r-stat-l { font-size:.7rem; opacity:.5; margin-top:.2rem; }
+        .r-btn { width:100%; padding:.9rem; font-size:1rem; font-weight:700; font-family:inherit; border:none; border-radius:14px; cursor:pointer; transition:transform .2s; margin-top:.5rem; }
+        .r-btn:hover { transform:translateY(-2px); }
+        .r-btn.primary { background:linear-gradient(135deg,var(--accent-gold),var(--accent-x)); color:#1a1a2e; }
+        .r-btn.secondary { background:var(--bg-dark); color:var(--text); border:2px solid var(--grid-line); }
+
+        /* Confetti */
+        .confetti-box { position:fixed; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:200; overflow:hidden; }
+        .conf { position:absolute; width:10px; height:10px; top:-20px; animation:cfall linear forwards; }
+        @keyframes cfall { 0%{transform:translateY(0) rotate(0);opacity:1} 100%{transform:translateY(100vh) rotate(720deg);opacity:0} }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a class="nav-brand" href="index.html">AppTracker</a>
+        <ul class="nav-items">
+            <li><a class="nav-item" href="index.html">🎮 井字過三關</a></li>
+            <li><a class="nav-item" href="multiply.html">✖️ 乘法大冒險</a></li>
+            <li><a class="nav-item active" href="multiply-td.html">🏰 乘法守城戰</a></li>
+            <li><a class="nav-item" href="#">📊 排行榜</a></li>
+        </ul>
+    </nav>
+
+    <div class="page-content">
+        <!-- START -->
+        <div class="screen active" id="scrStart">
+            <div class="start-card">
+                <div class="td-title">🏰 乘法守城戰</div>
+                <div class="td-sub">用數學力量守護你嘅城堡！</div>
+                <div class="section-label">選擇乘數表</div>
+                <div class="table-grid" id="tGrid"></div>
+                <button class="go-btn" id="goBtn" disabled>⚔️ 出發守城！</button>
+            </div>
+        </div>
+
+        <!-- GAME -->
+        <div class="screen" id="scrGame">
+            <div class="game-wrapper">
+                <div class="hud">
+                    <div class="hud-item"><div class="hud-lbl">波數</div><div class="hud-val wave" id="hWave">1</div></div>
+                    <div class="hud-item"><div class="hud-lbl">金幣</div><div class="hud-val gold" id="hGold">0</div></div>
+                    <div class="hud-item"><div class="hud-lbl">分數</div><div class="hud-val score" id="hScore">0</div></div>
+                    <div class="hud-item"><div class="hud-lbl">連擊</div><div class="hud-val" style="color:var(--accent-x)" id="hCombo">0</div></div>
+                </div>
+                <div class="battlefield" id="field">
+                    <div class="stars" id="starsBox"></div>
+                    <div class="ground"></div>
+                    <div class="road"></div>
+                    <div class="castle" id="castle">🏰</div>
+                    <div class="castle-hp-bg"><div class="castle-hp" id="castleHp"></div></div>
+                    <div class="wave-banner" id="waveBanner"></div>
+                </div>
+                <div class="q-panel">
+                    <div class="q-text" id="qText">準備中...</div>
+                    <div class="ans-grid" id="ansGrid"></div>
+                    <div class="combo-bar">
+                        <span class="combo-lbl">🔥 連擊</span>
+                        <span class="combo-count" id="comboCount">0</span>
+                        <button class="skill-btn" id="skillFreeze" disabled>❄️ 冰凍 (5連擊)</button>
+                        <button class="skill-btn" id="skillBomb" disabled>💣 炸彈 (8連擊)</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SHOP -->
+        <div class="screen" id="scrShop">
+            <div class="shop-card">
+                <div class="shop-title">🛒 商店</div>
+                <div class="shop-sub">強化你嘅城堡同攻擊力！</div>
+                <div class="shop-gold">💰 金幣: <span id="shopGold">0</span></div>
+                <div class="shop-items" id="shopItems"></div>
+                <button class="next-wave-btn" id="nextWaveBtn">⚔️ 下一波！</button>
+            </div>
+        </div>
+
+        <!-- RESULT -->
+        <div class="screen" id="scrResult">
+            <div class="result-card">
+                <div class="r-title" id="rTitle"></div>
+                <div class="r-stars" id="rStars"></div>
+                <div class="r-stats">
+                    <div class="r-stat"><div class="r-stat-v" id="rsWave">0</div><div class="r-stat-l">到達波數</div></div>
+                    <div class="r-stat"><div class="r-stat-v" id="rsScore">0</div><div class="r-stat-l">總分</div></div>
+                    <div class="r-stat"><div class="r-stat-v" id="rsCombo">0</div><div class="r-stat-l">最高連擊</div></div>
+                </div>
+                <button class="r-btn primary" id="rRetry">🔄 再戰一次</button>
+                <button class="r-btn secondary" id="rBack">🏠 返回選擇</button>
+            </div>
+            <div class="confetti-box" id="confBox"></div>
+        </div>
+    </div>
+
+<script>
+const $ = id => document.getElementById(id);
+const ENEMY_TYPES = [
+    { emoji:'🐛', name:'毛蟲', hp:2, speed:1, gold:5 },
+    { emoji:'🐸', name:'蛙兵', hp:3, speed:1.1, gold:6 },
+    { emoji:'🦇', name:'蝙蝠', hp:3, speed:1.4, gold:7 },
+    { emoji:'🐙', name:'章魚', hp:4, speed:1, gold:8 },
+    { emoji:'🦂', name:'蠍子', hp:4, speed:1.2, gold:9 },
+    { emoji:'👻', name:'幽靈', hp:5, speed:1.5, gold:10 },
+    { emoji:'👾', name:'外星人', hp:5, speed:1.1, gold:11 },
+    { emoji:'😈', name:'小惡魔', hp:6, speed:1.3, gold:12 },
+    { emoji:'🧟', name:'殭屍', hp:7, speed:1, gold:14 },
+    { emoji:'🐉', name:'飛龍', hp:8, speed:1.2, gold:16 },
+    { emoji:'👹', name:'魔王', hp:12, speed:.8, gold:25 },
+];
+const PROJECTILES = ['🔮','⚡','🌟','💫','☄️'];
+const SHOP_ITEMS_DEF = [
+    { id:'dmg', icon:'⚔️', name:'強化弓箭', desc:'傷害+1', cost:30, max:5, bought:0 },
+    { id:'hp', icon:'💚', name:'修復城牆', desc:'城堡回血 25', cost:20, max:99, bought:0 },
+    { id:'slow', icon:'🕸️', name:'蛛網陷阱', desc:'敵人減速20%', cost:40, max:3, bought:0 },
+    { id:'shield', icon:'🛡️', name:'護盾', desc:'減少受傷25%', cost:50, max:3, bought:0 },
+];
+
+let selTables = new Set();
+let wave=0, gold=0, score=0, combo=0, maxCombo=0, castleHP=100, maxCastleHP=100;
+let baseDmg=1, slowMult=1, shieldMult=1;
+let monsters=[], spawnQueue=[], currentAns=0, answering=false;
+let gameLoop=null, spawnTimer=null;
+let freezeAvail=false, bombAvail=false, frozen=false;
+
+// Build stars
+for(let i=0;i<40;i++){
+    const s=document.createElement('div');
+    s.className='star';
+    s.style.left=Math.random()*100+'%';
+    s.style.top=Math.random()*100+'%';
+    s.style.animationDelay=Math.random()*3+'s';
+    $('starsBox').appendChild(s);
+}
+
+// Build table grid
+for(let i=1;i<=12;i++){
+    const b=document.createElement('button');
+    b.className='tbl-btn'; b.textContent='×'+i;
+    b.onclick=()=>{ selTables.has(i)?selTables.delete(i):selTables.add(i); b.classList.toggle('selected'); $('goBtn').disabled=selTables.size===0; };
+    $('tGrid').appendChild(b);
+}
+
+function showScreen(id){ document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active')); $(id).classList.add('active'); }
+
+$('goBtn').onclick=startGame;
+$('rRetry').onclick=startGame;
+$('rBack').onclick=()=>showScreen('scrStart');
+$('nextWaveBtn').onclick=startWave;
+$('skillFreeze').onclick=useFreeze;
+$('skillBomb').onclick=useBomb;
+
+function startGame(){
+    wave=0; gold=0; score=0; combo=0; maxCombo=0; castleHP=100; maxCastleHP=100;
+    baseDmg=1; slowMult=1; shieldMult=1;
+    freezeAvail=false; bombAvail=false; frozen=false;
+    SHOP_ITEMS_DEF.forEach(si=>si.bought=0);
+    monsters=[]; spawnQueue=[];
+    clearInterval(gameLoop); clearTimeout(spawnTimer);
+    $('field').querySelectorAll('.monster,.projectile,.impact,.dmg-num').forEach(e=>e.remove());
+    updateHud();
+    showScreen('scrGame');
+    startWave();
+}
+
+function startWave(){
+    wave++;
+    updateHud();
+    showScreen('scrGame');
+    buildSpawnQueue();
+    showWaveBanner();
+    setTimeout(()=>{ beginSpawning(); nextQuestion(); },1200);
+}
+
+function buildSpawnQueue(){
+    spawnQueue=[];
+    const count = 3 + wave * 2;
+    const isBossWave = wave % 5 === 0;
+    for(let i=0;i<count;i++){
+        const tier = Math.min(Math.floor((wave-1)/2) + Math.floor(Math.random()*2), ENEMY_TYPES.length-2);
+        const t = ENEMY_TYPES[tier];
+        const hpMult = 1 + (wave-1)*0.15;
+        spawnQueue.push({ ...t, hp:Math.ceil(t.hp*hpMult), maxHp:Math.ceil(t.hp*hpMult), boss:false });
+    }
+    if(isBossWave){
+        const boss = ENEMY_TYPES[ENEMY_TYPES.length-1];
+        const hpMult = 1 + (wave-1)*0.3;
+        spawnQueue.push({ ...boss, hp:Math.ceil(boss.hp*hpMult), maxHp:Math.ceil(boss.hp*hpMult), boss:true });
+    }
+}
+
+function beginSpawning(){
+    clearInterval(gameLoop);
+    gameLoop = setInterval(tick, 50);
+    spawnNext();
+}
+
+function spawnNext(){
+    if(spawnQueue.length===0) return;
+    const data = spawnQueue.shift();
+    const el = document.createElement('div');
+    el.className = 'monster' + (data.boss ? ' boss' : '');
+    el.innerHTML = `${data.emoji}<div class="m-hp-bg"><div class="m-hp" style="width:100%"></div></div>`;
+    el.style.left = '700px';
+    $('field').appendChild(el);
+    const m = { el, ...data, x:700 };
+    monsters.push(m);
+    if(spawnQueue.length>0){
+        const delay = data.boss ? 2500 : 1200 + Math.random()*800;
+        spawnTimer = setTimeout(spawnNext, delay);
+    }
+}
+
+function tick(){
+    if(frozen) return;
+    const speed_base = 0.5;
+    for(let i=monsters.length-1;i>=0;i--){
+        const m=monsters[i];
+        if(m.hp<=0) continue;
+        m.x -= speed_base * m.speed * slowMult;
+        m.el.style.left = m.x + 'px';
+        if(m.x < 30){
+            const dmg = Math.round((m.boss?20:10) * shieldMult);
+            castleHP = Math.max(0, castleHP - dmg);
+            updateCastleHp();
+            flashCastle();
+            showDmgNum($('castle'), -dmg, 'var(--accent-x)');
+            m.hp=0; m.el.classList.add('dying');
+            setTimeout(()=>{ m.el.remove(); },400);
+            monsters.splice(i,1);
+            if(castleHP<=0){ endGame(); return; }
+        }
+    }
+    if(monsters.length===0 && spawnQueue.length===0){
+        clearInterval(gameLoop);
+        setTimeout(openShop, 800);
+    }
+}
+
+function nextQuestion(){
+    if(castleHP<=0) return;
+    answering=true;
+    const tables=[...selTables];
+    const a=tables[Math.floor(Math.random()*tables.length)];
+    const b=Math.floor(Math.random()*12)+1;
+    currentAns=a*b;
+    $('qText').innerHTML=`${a} <span class="op">×</span> ${b} = <span class="op">?</span>`;
+    const opts=new Set([currentAns]);
+    while(opts.size<4){ const off=Math.floor(Math.random()*20)-10; const w=currentAns+off; if(w>0&&w!==currentAns) opts.add(w); }
+    const arr=[...opts].sort(()=>Math.random()-.5);
+    const grid=$('ansGrid'); grid.innerHTML='';
+    arr.forEach(v=>{
+        const btn=document.createElement('button');
+        btn.className='ans-btn'; btn.textContent=v;
+        btn.onclick=()=>handleAns(v,btn);
+        grid.appendChild(btn);
+    });
+}
+
+function handleAns(v, btn){
+    if(!answering) return;
+    answering=false;
+    const btns=$('ansGrid').querySelectorAll('.ans-btn');
+    btns.forEach(b=>{ b.disabled=true; if(parseInt(b.textContent)===currentAns) b.classList.add('correct'); });
+
+    if(v===currentAns){
+        combo++; if(combo>maxCombo) maxCombo=combo;
+        score += 10 + combo*3;
+        gold += 3 + Math.floor(combo/3);
+        const target = monsters.find(m=>m.hp>0);
+        if(target){
+            fireProjectile(target);
+        }
+        updateSkills();
+    } else {
+        btn.classList.add('wrong');
+        combo=0;
+        updateSkills();
+    }
+    updateHud();
+    setTimeout(()=>{
+        if(castleHP>0 && (monsters.length>0||spawnQueue.length>0)) nextQuestion();
+    }, 500);
+}
+
+function fireProjectile(target){
+    const proj = document.createElement('div');
+    proj.className='projectile';
+    proj.textContent=PROJECTILES[Math.floor(Math.random()*PROJECTILES.length)];
+    proj.style.left='70px'; proj.style.bottom='55px';
+    $('field').appendChild(proj);
+    const tx=target.x, ty=35;
+    const dur=300;
+    proj.animate([
+        {left:'70px', bottom:'55px', opacity:1},
+        {left:tx+'px', bottom:ty+'px', opacity:1}
+    ],{duration:dur, easing:'ease-in'}).onfinish=()=>{
+        proj.remove();
+        hitMonster(target);
+    };
+}
+
+function hitMonster(m){
+    if(m.hp<=0) return;
+    const dmg = baseDmg + Math.floor(combo/3);
+    m.hp = Math.max(0, m.hp-dmg);
+    m.el.querySelector('.m-hp').style.width=(m.hp/m.maxHp*100)+'%';
+    m.el.classList.remove('hit'); void m.el.offsetWidth; m.el.classList.add('hit');
+    showDmgNum(m.el, -dmg, 'var(--accent-gold)');
+    showImpact(m.x+15, 150);
+    if(m.hp<=0){
+        gold += m.gold;
+        score += m.gold * 2;
+        m.el.classList.add('dying');
+        setTimeout(()=>{ m.el.remove(); }, 400);
+        const idx=monsters.indexOf(m);
+        if(idx>-1) monsters.splice(idx,1);
+        updateHud();
+    }
+}
+
+function showImpact(x,y){
+    const imp=document.createElement('div');
+    imp.className='impact'; imp.textContent='💥';
+    imp.style.left=x+'px'; imp.style.bottom=(220-y)+'px';
+    $('field').appendChild(imp);
+    setTimeout(()=>imp.remove(),500);
+}
+
+function showDmgNum(anchor, val, color){
+    const el=document.createElement('div');
+    el.className='dmg-num';
+    el.textContent=val; el.style.color=color;
+    const rect=anchor.getBoundingClientRect();
+    const fieldRect=$('field').getBoundingClientRect();
+    el.style.left=(rect.left-fieldRect.left+rect.width/2)+'px';
+    el.style.top=(rect.top-fieldRect.top-10)+'px';
+    $('field').appendChild(el);
+    setTimeout(()=>el.remove(),800);
+}
+
+function showWaveBanner(){
+    const b=$('waveBanner');
+    const isBoss = wave%5===0;
+    b.textContent = isBoss ? `🔥 第 ${wave} 波 — BOSS 來襲！` : `⚔️ 第 ${wave} 波`;
+    b.classList.remove('show'); void b.offsetWidth; b.classList.add('show');
+}
+
+function flashCastle(){
+    $('castle').classList.add('damaged');
+    setTimeout(()=>$('castle').classList.remove('damaged'),400);
+}
+
+function updateHud(){
+    $('hWave').textContent=wave;
+    $('hGold').textContent=gold;
+    $('hScore').textContent=score;
+    $('hCombo').textContent=combo;
+    $('comboCount').textContent=combo;
+    updateCastleHp();
+}
+
+function updateCastleHp(){
+    const bar=$('castleHp');
+    bar.style.width=Math.max(0,castleHP/maxCastleHP*100)+'%';
+    bar.className='castle-hp'+(castleHP<30?' low':'');
+}
+
+function updateSkills(){
+    freezeAvail=combo>=5;
+    bombAvail=combo>=8;
+    const fb=$('skillFreeze'), bb=$('skillBomb');
+    fb.disabled=!freezeAvail; fb.className='skill-btn'+(freezeAvail?' ready':'');
+    bb.disabled=!bombAvail; bb.className='skill-btn'+(bombAvail?' ready':'');
+}
+
+function useFreeze(){
+    if(!freezeAvail) return;
+    combo=0; freezeAvail=false; updateSkills(); updateHud();
+    frozen=true;
+    monsters.forEach(m=>{ m.el.style.filter='brightness(1.5) hue-rotate(180deg)'; });
+    setTimeout(()=>{
+        frozen=false;
+        monsters.forEach(m=>{ m.el.style.filter=''; });
+    }, 3000);
+}
+
+function useBomb(){
+    if(!bombAvail) return;
+    combo=0; bombAvail=false; updateSkills(); updateHud();
+    const dmg=baseDmg*3+5;
+    monsters.forEach(m=>{
+        if(m.hp<=0) return;
+        m.hp=Math.max(0,m.hp-dmg);
+        m.el.querySelector('.m-hp').style.width=(m.hp/m.maxHp*100)+'%';
+        showImpact(m.x, 150);
+        showDmgNum(m.el, -dmg, '#ff4444');
+        if(m.hp<=0){
+            gold+=m.gold; score+=m.gold*2;
+            m.el.classList.add('dying');
+            setTimeout(()=>m.el.remove(),400);
+        }
+    });
+    monsters=monsters.filter(m=>m.hp>0);
+    updateHud();
+}
+
+function openShop(){
+    $('shopGold').textContent=gold;
+    const container=$('shopItems'); container.innerHTML='';
+    SHOP_ITEMS_DEF.forEach(si=>{
+        const sold=si.bought>=si.max;
+        const afford=gold>=si.cost;
+        const div=document.createElement('div');
+        div.className='shop-item'+(sold?' sold':'');
+        div.innerHTML=`<div class="si-icon">${si.icon}</div><div class="si-name">${si.name}</div><div class="si-desc">${si.desc}</div><div class="si-cost">${sold?'已滿':'💰 '+si.cost}</div>`;
+        if(!sold && afford){
+            div.onclick=()=>{
+                gold-=si.cost; si.bought++;
+                if(si.id==='dmg') baseDmg++;
+                if(si.id==='hp'){ castleHP=Math.min(maxCastleHP, castleHP+25); updateCastleHp(); }
+                if(si.id==='slow') slowMult=Math.max(.4, slowMult-.2);
+                if(si.id==='shield') shieldMult=Math.max(.25, shieldMult-.25);
+                openShop();
+            };
+        }
+        container.appendChild(div);
+    });
+    showScreen('scrShop');
+}
+
+function endGame(){
+    clearInterval(gameLoop); clearTimeout(spawnTimer);
+    monsters.forEach(m=>m.el.remove()); monsters=[];
+    const stars = wave>=15?3 : wave>=8?2 : wave>=3?1 : 0;
+    const titles=['繼續加油！💪','唔錯喎！👍','超強！🎉','傳說級！🏆'];
+    $('rTitle').textContent=titles[stars];
+    $('rStars').textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars);
+    $('rsWave').textContent=wave;
+    $('rsScore').textContent=score;
+    $('rsCombo').textContent=maxCombo;
+    showScreen('scrResult');
+    if(stars>=2) spawnConfetti();
+}
+
+function spawnConfetti(){
+    const c=$('confBox'); c.innerHTML='';
+    const cols=['#ff6b6b','#4ecdc4','#ffd93d','#a855f7','#6ee7b7','#60a5fa'];
+    for(let i=0;i<80;i++){
+        const p=document.createElement('div'); p.className='conf';
+        p.style.left=Math.random()*100+'%';
+        p.style.backgroundColor=cols[Math.floor(Math.random()*cols.length)];
+        p.style.animationDuration=(1.5+Math.random()*2)+'s';
+        p.style.animationDelay=Math.random()*.8+'s';
+        p.style.borderRadius=Math.random()>.5?'50%':'2px';
+        p.style.width=(6+Math.random()*8)+'px';
+        p.style.height=(6+Math.random()*8)+'px';
+        c.appendChild(p);
+    }
+    setTimeout(()=>c.innerHTML='',4000);
+}
+</script>
+</body>
+</html>
