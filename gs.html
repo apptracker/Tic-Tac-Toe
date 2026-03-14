@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>常識溫習</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="nav.css">
+    <style>
+        .gs-title { font-size:2rem; font-weight:900; text-align:center; margin-bottom:.3rem; background:linear-gradient(135deg,var(--accent-gold),var(--accent-o)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+        .gs-sub { text-align:center; opacity:.5; margin-bottom:1.5rem; font-size:.9rem; }
+        .gs-badge { display:inline-block; background:rgba(78,205,196,.12); color:var(--accent-o); font-size:.75rem; font-weight:700; padding:.2rem .6rem; border-radius:8px; margin-bottom:1rem; }
+
+        .topic-section { margin-bottom:2rem; width:100%; max-width:600px; }
+        .topic-header {
+            display:flex; align-items:center; gap:.6rem;
+            padding:.6rem 1rem; margin-bottom:.8rem;
+            background:var(--bg-card); border-radius:14px;
+            border:1px solid rgba(255,255,255,.05);
+            font-weight:900; font-size:1rem;
+        }
+        .topic-icon { font-size:1.4rem; }
+        .topic-name { flex:1; }
+        .topic-count { font-size:.75rem; opacity:.4; font-weight:700; }
+
+        .cards-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(160px,1fr)); gap:10px; }
+        .vocab-card {
+            background:var(--bg-card); border:1px solid rgba(255,255,255,.05);
+            border-radius:16px; padding:1rem; text-align:center;
+            cursor:pointer; transition:all .2s; position:relative; overflow:hidden;
+            min-height:120px; display:flex; flex-direction:column; align-items:center; justify-content:center;
+        }
+        .vocab-card:hover { transform:translateY(-3px); box-shadow:0 10px 25px rgba(0,0,0,.3); border-color:rgba(255,255,255,.1); }
+        .vocab-card.flipped .card-front { opacity:0; transform:rotateY(90deg); }
+        .vocab-card.flipped .card-back { opacity:1; transform:rotateY(0); }
+
+        .card-front, .card-back { transition:all .3s ease; }
+        .card-back { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:.8rem; opacity:0; transform:rotateY(-90deg); background:var(--bg-card); border-radius:16px; }
+
+        .card-emoji { font-size:2.2rem; margin-bottom:.4rem; filter:drop-shadow(0 2px 6px rgba(0,0,0,.3)); }
+        .card-word { font-size:1.1rem; font-weight:900; }
+        .card-pinyin { font-size:.7rem; opacity:.4; margin-top:.2rem; }
+        .card-hint { font-size:.75rem; opacity:.6; margin-top:.3rem; line-height:1.4; }
+        .card-tap { font-size:.6rem; opacity:.25; margin-top:.5rem; }
+
+        .mode-bar {
+            display:flex; gap:8px; margin-bottom:1.5rem; flex-wrap:wrap; justify-content:center;
+        }
+        .mode-btn {
+            padding:.5rem 1rem; border-radius:10px; border:2px solid var(--grid-line);
+            background:var(--bg-dark); color:var(--text); font-family:inherit;
+            font-size:.85rem; font-weight:700; cursor:pointer; transition:all .15s;
+        }
+        .mode-btn:hover { border-color:rgba(255,255,255,.2); }
+        .mode-btn.active { border-color:var(--accent-o); background:rgba(78,205,196,.1); color:var(--accent-o); }
+
+        .quiz-card {
+            background:var(--bg-card); border-radius:20px; padding:2rem;
+            box-shadow:0 25px 50px -12px rgba(0,0,0,.5);
+            border:1px solid rgba(255,255,255,.05);
+            width:100%; max-width:500px; text-align:center;
+        }
+        .quiz-q { font-size:3rem; margin-bottom:.5rem; }
+        .quiz-prompt { font-size:1.1rem; font-weight:700; margin-bottom:1.2rem; }
+        .quiz-opts { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:1rem; }
+        .quiz-opt {
+            padding:.8rem; font-size:1rem; font-weight:700; font-family:inherit;
+            background:var(--bg-dark); border:2px solid var(--grid-line); border-radius:12px;
+            color:var(--text); cursor:pointer; transition:all .15s;
+        }
+        .quiz-opt:hover:not(:disabled) { border-color:rgba(255,255,255,.3); transform:scale(1.03); }
+        .quiz-opt.correct { border-color:var(--accent-o); background:rgba(78,205,196,.15); color:var(--accent-o); }
+        .quiz-opt.wrong { border-color:var(--accent-x); background:rgba(255,107,107,.15); color:var(--accent-x); }
+        .quiz-opt:disabled { cursor:default; }
+        .quiz-score { font-size:.85rem; opacity:.5; }
+        .quiz-progress { width:100%; height:6px; background:var(--grid-line); border-radius:3px; margin-bottom:1rem; overflow:hidden; }
+        .quiz-progress-bar { height:100%; background:linear-gradient(90deg,var(--accent-o),var(--accent-gold)); border-radius:3px; transition:width .3s; }
+    </style>
+</head>
+<body>
+    <nav class="sidebar" id="sidebar">
+        <a class="sidebar-brand" href="index.html">AppTracker</a>
+        <div class="sidebar-section">遊戲</div>
+        <ul class="sidebar-nav">
+            <li><a class="sidebar-link" href="index.html"><span class="nav-emoji">🎮</span> 井字過三關</a></li>
+            <li><a class="sidebar-link" href="multiply.html"><span class="nav-emoji">✖️</span> 乘法大冒險</a></li>
+            <li><a class="sidebar-link" href="multiply-td.html"><span class="nav-emoji">🏰</span> 乘法守城戰</a></li>
+        </ul>
+        <div class="sidebar-section">學習</div>
+        <ul class="sidebar-nav">
+            <li><a class="sidebar-link active" href="gs.html"><span class="nav-emoji">📖</span> 常識溫習</a></li>
+        </ul>
+        <div class="sidebar-footer">AppTracker © 2026</div>
+    </nav>
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    <div class="topbar"><button class="hamburger" id="menuOpen">☰</button><span class="topbar-title">AppTracker</span></div>
+
+    <div class="main-content">
+        <div class="gs-badge">2C 班 · 常識卷 · 重點溫習</div>
+        <div class="gs-title">📖 常識溫習詞語</div>
+        <div class="gs-sub">點擊卡片翻轉查看解釋</div>
+
+        <div class="mode-bar">
+            <button class="mode-btn active" data-mode="cards">📇 詞語卡</button>
+            <button class="mode-btn" data-mode="quiz">🧠 小測驗</button>
+        </div>
+
+        <!-- CARDS MODE -->
+        <div id="cardsMode"></div>
+
+        <!-- QUIZ MODE -->
+        <div id="quizMode" style="display:none; width:100%; display:none; flex-direction:column; align-items:center;"></div>
+    </div>
+
+    <script src="nav.js"></script>
+    <script>
+    const VOCAB = [
+        { topic:'社區與服務', icon:'🏘️', words:[
+            { word:'救生員', emoji:'🏊', hint:'喺泳池或沙灘保護大家安全嘅人' },
+            { word:'郵差', emoji:'📮', hint:'每日幫我哋送信同包裹' },
+            { word:'醫院', emoji:'🏥', hint:'睇醫生同護士嘅地方' },
+            { word:'圖書館', emoji:'📚', hint:'可以借書同安靜閱讀嘅地方' },
+            { word:'街燈', emoji:'🔦', hint:'夜晚照亮街道嘅燈' },
+            { word:'服務', emoji:'🤝', hint:'幫助其他人嘅行為' },
+            { word:'新界', emoji:'🗺️', hint:'香港三大區域之一' },
+        ]},
+        { topic:'大自然', icon:'🌿', words:[
+            { word:'海星', emoji:'⭐', hint:'住喺海底，有五隻腳嘅動物' },
+            { word:'太陽', emoji:'☀️', hint:'日頭發光發熱嘅恆星' },
+            { word:'月亮', emoji:'🌙', hint:'夜晚喺天空嘅衛星' },
+            { word:'益蟲', emoji:'🐞', hint:'對農作物有益嘅昆蟲，例如蜜蜂' },
+            { word:'寄居蟹', emoji:'🦀', hint:'借其他貝殼嚟住嘅蟹' },
+            { word:'農曆十五', emoji:'🌕', hint:'月圓之夜，中秋節就係農曆八月十五' },
+        ]},
+        { topic:'品德與相處', icon:'💝', words:[
+            { word:'愛護', emoji:'🫶', hint:'愛惜同保護身邊嘅人同事物' },
+            { word:'守時', emoji:'⏰', hint:'準時赴約，唔好遲到' },
+            { word:'清潔', emoji:'🧹', hint:'保持乾淨整齊' },
+            { word:'和睦', emoji:'🤝', hint:'大家和平友善咁相處' },
+            { word:'相處', emoji:'👫', hint:'同其他人一齊生活同交流' },
+            { word:'寧靜', emoji:'🤫', hint:'安安靜靜，冇嘈音' },
+            { word:'傷害', emoji:'⚠️', hint:'令人受傷或者唔開心' },
+        ]},
+        { topic:'日常活動', icon:'🎯', words:[
+            { word:'游泳', emoji:'🏊', hint:'喺水入面運動' },
+            { word:'休息', emoji:'😴', hint:'攰咗就要瞓覺或者放鬆' },
+            { word:'溫習', emoji:'📖', hint:'重新睇返學過嘅嘢' },
+            { word:'康樂文娛', emoji:'🎭', hint:'有益身心嘅娛樂活動' },
+            { word:'友好', emoji:'😊', hint:'對人友善同親切' },
+        ]},
+        { topic:'形容與概念', icon:'🔷', words:[
+            { word:'形狀', emoji:'🔷', hint:'物件嘅外形，例如圓形、正方形' },
+            { word:'引路徑', emoji:'🛤️', hint:'帶路嘅小路' },
+        ]},
+    ];
+
+    const allWords = VOCAB.flatMap(t => t.words.map(w => ({...w, topic:t.topic, topicIcon:t.icon})));
+
+    // Build cards
+    function buildCards(){
+        const container = document.getElementById('cardsMode');
+        container.innerHTML = '';
+        VOCAB.forEach(t => {
+            const sec = document.createElement('div');
+            sec.className = 'topic-section';
+            sec.innerHTML = `<div class="topic-header"><span class="topic-icon">${t.icon}</span><span class="topic-name">${t.topic}</span><span class="topic-count">${t.words.length} 個詞語</span></div>`;
+            const grid = document.createElement('div');
+            grid.className = 'cards-grid';
+            t.words.forEach(w => {
+                const card = document.createElement('div');
+                card.className = 'vocab-card';
+                card.innerHTML = `
+                    <div class="card-front">
+                        <div class="card-emoji">${w.emoji}</div>
+                        <div class="card-word">${w.word}</div>
+                        <div class="card-tap">👆 點擊翻轉</div>
+                    </div>
+                    <div class="card-back">
+                        <div class="card-emoji">${w.emoji}</div>
+                        <div class="card-word">${w.word}</div>
+                        <div class="card-hint">${w.hint}</div>
+                    </div>`;
+                card.onclick = () => card.classList.toggle('flipped');
+                grid.appendChild(card);
+            });
+            sec.appendChild(grid);
+            container.appendChild(sec);
+        });
+    }
+    buildCards();
+
+    // Quiz mode
+    let quizIdx=0, quizScore=0, quizOrder=[];
+    function startQuiz(){
+        quizIdx=0; quizScore=0;
+        quizOrder=[...allWords].sort(()=>Math.random()-.5).slice(0,10);
+        showQuizQ();
+    }
+    function showQuizQ(){
+        const container=document.getElementById('quizMode');
+        if(quizIdx>=quizOrder.length){ showQuizResult(); return; }
+        const w=quizOrder[quizIdx];
+        const wrongs=allWords.filter(x=>x.word!==w.word).sort(()=>Math.random()-.5).slice(0,3);
+        const opts=[w,...wrongs].sort(()=>Math.random()-.5);
+        container.innerHTML=`
+            <div class="quiz-card">
+                <div class="quiz-progress"><div class="quiz-progress-bar" style="width:${quizIdx/quizOrder.length*100}%"></div></div>
+                <div class="quiz-q">${w.emoji}</div>
+                <div class="quiz-prompt">呢個 emoji 代表邊個詞語？</div>
+                <div class="quiz-opts" id="qOpts"></div>
+                <div class="quiz-score">第 ${quizIdx+1}/${quizOrder.length} 題 · 答對 ${quizScore}</div>
+            </div>`;
+        const grid=document.getElementById('qOpts');
+        opts.forEach(o=>{
+            const btn=document.createElement('button');
+            btn.className='quiz-opt'; btn.textContent=o.word;
+            btn.onclick=()=>{
+                grid.querySelectorAll('.quiz-opt').forEach(b=>{b.disabled=true; if(b.textContent===w.word)b.classList.add('correct');});
+                if(o.word===w.word) quizScore++;
+                else btn.classList.add('wrong');
+                setTimeout(()=>{quizIdx++; showQuizQ();},800);
+            };
+            grid.appendChild(btn);
+        });
+    }
+    function showQuizResult(){
+        const pct=Math.round(quizScore/quizOrder.length*100);
+        const stars=pct>=90?'⭐⭐⭐':pct>=70?'⭐⭐☆':pct>=50?'⭐☆☆':'☆☆☆';
+        const msg=pct>=90?'太叻喇！🎉':pct>=70?'做得唔錯！👍':pct>=50?'繼續加油！💪':'要多啲溫習啊！📖';
+        document.getElementById('quizMode').innerHTML=`
+            <div class="quiz-card">
+                <div style="font-size:2rem;margin-bottom:.5rem">${msg}</div>
+                <div style="font-size:2.5rem;margin:1rem 0">${stars}</div>
+                <div style="font-size:1.2rem;font-weight:900;margin-bottom:1.5rem">答對 ${quizScore} / ${quizOrder.length}</div>
+                <button class="mode-btn active" onclick="startQuiz()" style="width:100%;padding:.8rem;font-size:1rem">🔄 再做一次</button>
+            </div>`;
+    }
+
+    // Mode switching
+    document.querySelectorAll('.mode-btn[data-mode]').forEach(btn=>{
+        btn.onclick=()=>{
+            document.querySelectorAll('.mode-btn[data-mode]').forEach(b=>b.classList.remove('active'));
+            btn.classList.add('active');
+            const mode=btn.dataset.mode;
+            document.getElementById('cardsMode').style.display=mode==='cards'?'block':'none';
+            const qm=document.getElementById('quizMode');
+            qm.style.display=mode==='quiz'?'flex':'none';
+            if(mode==='quiz') startQuiz();
+        };
+    });
+    </script>
+</body>
+</html>
