@@ -120,7 +120,7 @@ function getAlienSpeed(){return 0.3+wave*0.02;}
 let ship,bullets,aliens,particles,stars,explosions,texts,shakeT=0;
 let question={a:0,b:0,op:'+',ans:0};
 let alienSpeed=0.4,spawnCD=0,nextQ=true;
-let flashColor='',flashLife=0,bigMsg={txt:'',sub:'',color:'',life:0},frozen=false;
+let flashColor='',flashLife=0,bigMsg={txt:'',sub:'',color:'',life:0},frozen=false,waitConfirm=false;
 
 // Options
 document.getElementById('optAdd').onclick=function(){this.classList.toggle('on');useAdd=this.classList.contains('on');};
@@ -255,13 +255,13 @@ function update(){
                     markRight(question.a,question.op,question.b);
                     explode(a.drawX,a.y,'#4CAF50',true);
                     explode(a.drawX,a.y,'#ffd93d',true);
-                    flashColor='rgba(76,175,80,0.25)';flashLife=15;
-                    bigMsg={txt:'✓ 答對了！',sub:question.a+' '+question.op+' '+question.b+' = '+question.ans,color:'#4CAF50',life:50};
-                    if(combo>=3)bigMsg.txt='🔥 '+combo+'連擊！答對了！';
-                    shakeT=6;
+                    flashColor='rgba(76,175,80,0.2)';flashLife=10;
+                    bigMsg={txt:'✓ 正確！',sub:'+'+pts,color:'#4CAF50',life:25};
+                    if(combo>=3)bigMsg.txt='🔥'+combo+'連擊！';
+                    shakeT=4;
                     wave++;
                     if(wave%5===0)alienSpeed=Math.min(1.5,alienSpeed+0.1);
-                    frozen=true;setTimeout(()=>{frozen=false;if(playing)genQuestion();},900);
+                    frozen=true;setTimeout(()=>{frozen=false;if(playing)genQuestion();},500);
                 }else{
                     combo=0;
                     lives--;
@@ -269,9 +269,9 @@ function update(){
                     explode(a.drawX,a.y,'#F44336',false);
                     for(let k=0;k<20;k++){const ag=Math.random()*Math.PI*2;particles.push({x:a.drawX,y:a.y,vx:Math.cos(ag)*3,vy:Math.sin(ag)*3,life:40,color:'#F44336',size:Math.random()*5+2});}
                     flashColor='rgba(244,67,54,0.35)';flashLife=25;
-                    bigMsg={txt:'✗ 答錯了！',sub:'正確答案是 '+question.ans+'　（'+question.a+' '+question.op+' '+question.b+' = '+question.ans+'）',color:'#F44336',life:80};
+                    bigMsg={txt:'✗ 答錯了！',sub:'正確答案是 '+question.ans+'　（'+question.a+' '+question.op+' '+question.b+' = '+question.ans+'）',color:'#F44336',life:9999};
                     shakeT=15;
-                    frozen=true;setTimeout(()=>{frozen=false;if(lives<=0){playing=false;setTimeout(endGame,300);}},1200);
+                    frozen=true;waitConfirm=true;
                 }
                 updateHud();
                 break;
@@ -353,15 +353,19 @@ function draw(){
     if(bigMsg.life>0){
         const alpha=Math.min(1,bigMsg.life/20);
         cx.globalAlpha=alpha;
-        cx.fillStyle='rgba(0,0,0,0.6)';cx.fillRect(0,H/2-80,W,160);
-        cx.fillStyle=bigMsg.color;cx.font='bold 42px "Noto Sans TC",sans-serif';cx.textAlign='center';
+        cx.fillStyle='rgba(0,0,0,0.7)';cx.fillRect(0,H/2-100,W,waitConfirm?220:160);
+        cx.fillStyle=bigMsg.color;cx.font='bold 40px "Noto Sans TC",sans-serif';cx.textAlign='center';
         cx.shadowColor=bigMsg.color;cx.shadowBlur=20;
-        cx.fillText(bigMsg.txt,W/2,H/2-10);
+        cx.fillText(bigMsg.txt,W/2,H/2-20);
         cx.shadowBlur=0;
-        cx.fillStyle='#fff';cx.font='bold 18px "Noto Sans TC",sans-serif';
-        cx.fillText(bigMsg.sub,W/2,H/2+30);
+        cx.fillStyle='#fff';cx.font='bold 17px "Noto Sans TC",sans-serif';
+        cx.fillText(bigMsg.sub,W/2,H/2+20);
+        if(waitConfirm){
+            cx.fillStyle='#ffd93d';cx.font='bold 20px "Noto Sans TC",sans-serif';
+            cx.fillText('👆 點擊任意位置繼續',W/2,H/2+70);
+        }
         cx.globalAlpha=1;
-        bigMsg.life--;
+        if(!waitConfirm)bigMsg.life--;
     }
     cx.restore();
 }
@@ -425,13 +429,23 @@ function pMove(px){
     const scaleX=W/rect.width;
     ship.x=Math.max(20,Math.min(W-20,(px-rect.left)*scaleX));
 }
-cv.addEventListener('touchstart',e=>{e.preventDefault();pointer.down=true;pMove(e.touches[0].clientX);fire();},{passive:false});
+cv.addEventListener('touchstart',e=>{e.preventDefault();
+    if(waitConfirm){waitConfirm=false;bigMsg.life=0;frozen=false;if(lives<=0){playing=false;setTimeout(endGame,300);}else setTimeout(()=>{if(playing)genQuestion();},200);return;}
+    pointer.down=true;pMove(e.touches[0].clientX);fire();},{passive:false});
 cv.addEventListener('touchmove',e=>{e.preventDefault();pMove(e.touches[0].clientX);},{passive:false});
 cv.addEventListener('touchend',()=>pointer.down=false);
 cv.addEventListener('mousedown',e=>{pointer.down=true;pMove(e.clientX);fire();});
 cv.addEventListener('mousemove',e=>{if(pointer.down)pMove(e.clientX);});
 cv.addEventListener('mouseup',()=>pointer.down=false);
-cv.addEventListener('click',e=>{pMove(e.clientX);fire();});
+cv.addEventListener('click',e=>{
+    if(waitConfirm){
+        waitConfirm=false;bigMsg.life=0;frozen=false;
+        if(lives<=0){playing=false;setTimeout(endGame,300);}
+        else setTimeout(()=>{if(playing)genQuestion();},200);
+        return;
+    }
+    pMove(e.clientX);fire();
+});
 
 // Auto-fire on touch hold
 setInterval(()=>{if(pointer.down&&playing)fire();},300);
