@@ -233,7 +233,7 @@ function showF(){
     const g=document.getElementById('fO');
     opts.forEach(c=>{const b=document.createElement('button');b.className='fill-opt';b.textContent=c;b.onclick=()=>{g.querySelectorAll('.fill-opt').forEach(x=>{x.disabled=true;if(x.textContent===cc)x.classList.add('correct');});if(c===cc)fS++;else b.classList.add('wrong');setTimeout(()=>{fI++;showF();},800);};g.appendChild(b);});
 }
-function showFR(){const p=Math.round(fS/fO.length*100),s=p>=90?'⭐⭐⭐':p>=70?'⭐⭐☆':p>=50?'⭐☆☆':'☆☆☆',m=p>=90?'太叻喇！🎉':p>=70?'做得唔錯！👍':p>=50?'繼續加油！💪':'要多啲溫習📖';document.getElementById('panelFill').innerHTML=`<div class="fill-card"><div style="font-size:1.8rem;margin-bottom:.5rem">${m}</div><div style="font-size:2.5rem;margin:.8rem 0">${s}</div><div style="font-size:1.1rem;font-weight:900;margin-bottom:1rem">答對${fS}/${fO.length}</div><button class="mode-btn active" onclick="startFill()" style="width:100%;padding:.7rem;font-size:.9rem">🔄 再做一次</button></div>`;}
+function showFR(){const p=Math.round(fS/fO.length*100),s=p>=90?'⭐⭐⭐':p>=70?'⭐⭐☆':p>=50?'⭐☆☆':'☆☆☆',m=p>=90?'太棒了！🎉':p>=70?'做得不錯！👍':p>=50?'繼續加油！💪':'要多溫習！📖';document.getElementById('panelFill').innerHTML=`<div class="fill-card"><div style="font-size:1.8rem;margin-bottom:.5rem">${m}</div><div style="font-size:2.5rem;margin:.8rem 0">${s}</div><div style="font-size:1.1rem;font-weight:900;margin-bottom:1rem">答對${fS}/${fO.length}</div><button class="mode-btn active" onclick="startFill()" style="width:100%;padding:.7rem;font-size:.9rem">🔄 再做一次</button></div>`;}
 
 // 4. Quiz
 let qI=0,qS=0,qO=[];
@@ -246,7 +246,7 @@ function showQ(){
     const g=document.getElementById('qO');
     opts.forEach(o=>{const b=document.createElement('button');b.className='quiz-opt';b.textContent=o.word;b.onclick=()=>{g.querySelectorAll('.quiz-opt').forEach(x=>{x.disabled=true;if(x.textContent===w.word)x.classList.add('correct');});if(o.word===w.word)qS++;else b.classList.add('wrong');setTimeout(()=>{qI++;showQ();},800);};g.appendChild(b);});
 }
-function showQR(){const p=Math.round(qS/qO.length*100),s=p>=90?'⭐⭐⭐':p>=70?'⭐⭐☆':p>=50?'⭐☆☆':'☆☆☆',m=p>=90?'太叻喇！🎉':p>=70?'做得唔錯！👍':p>=50?'繼續加油！💪':'要多啲溫習📖';document.getElementById('panelQuiz').innerHTML=`<div class="quiz-card"><div style="font-size:1.8rem;margin-bottom:.5rem">${m}</div><div style="font-size:2.5rem;margin:.8rem 0">${s}</div><div style="font-size:1.1rem;font-weight:900;margin-bottom:1rem">答對${qS}/${qO.length}</div><button class="mode-btn active" onclick="startQuiz()" style="width:100%;padding:.7rem;font-size:.9rem">🔄 再做一次</button></div>`;}
+function showQR(){const p=Math.round(qS/qO.length*100),s=p>=90?'⭐⭐⭐':p>=70?'⭐⭐☆':p>=50?'⭐☆☆':'☆☆☆',m=p>=90?'太棒了！🎉':p>=70?'做得不錯！👍':p>=50?'繼續加油！💪':'要多溫習！📖';document.getElementById('panelQuiz').innerHTML=`<div class="quiz-card"><div style="font-size:1.8rem;margin-bottom:.5rem">${m}</div><div style="font-size:2.5rem;margin:.8rem 0">${s}</div><div style="font-size:1.1rem;font-weight:900;margin-bottom:1rem">答對${qS}/${qO.length}</div><button class="mode-btn active" onclick="startQuiz()" style="width:100%;padding:.7rem;font-size:.9rem">🔄 再做一次</button></div>`;}
 </script>
 </body>
 </html>

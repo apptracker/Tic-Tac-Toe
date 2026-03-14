@@ -278,7 +278,7 @@
             <div class="game-title">⚔️ 乘法大冒險</div>
             <div class="game-subtitle">打敗怪獸，成為數學勇者！</div>
             <div class="start-card">
-                <div class="section-label">選擇要練習嘅乘數表</div>
+                <div class="section-label">選擇要練習的乘數表</div>
                 <div class="table-grid" id="tableGrid"></div>
                 <div style="display:flex;gap:6px;margin-bottom:1.5rem;flex-wrap:wrap">
                     <button class="diff-btn" id="selOdd">單數</button>
@@ -352,7 +352,7 @@
             { emoji: '🐉', name: '巨龍', hp: 8 },
             { emoji: '👹', name: '魔王', hp: 10 },
         ];
-        const COMBO_MSGS = ['', '', 'Nice!', '好嘢！', '勁呀！', '超強！', '無敵！', '逆天！', '神級！'];
+        const COMBO_MSGS = ['', '', 'Nice!', '很好！', '太強了！', '超強！', '無敵！', '逆天！', '神級！'];
         const PARTICLES_EMOJIS = ['⭐','✨','💫','🌟','⚡','💥','🔥'];
         const DIFFICULTIES = [
             { label: '😊 簡單', time: 10, multi: 1 },
@@ -623,7 +623,7 @@
             const accuracy = total > 0 ? Math.round((correct / total) * 100) : 0;
             const stars = accuracy >= 90 ? 3 : accuracy >= 70 ? 2 : accuracy >= 50 ? 1 : 0;
 
-            const titles = ['繼續加油！💪', '做得唔錯！👍', '非常厲害！🎉', '完美通關！🏆'];
+            const titles = ['繼續加油！💪', '做得不錯！👍', '非常厲害！🎉', '完美通關！🏆'];
             $('resultTitle').textContent = titles[stars];
             $('resultStars').textContent = '⭐'.repeat(stars) + '☆'.repeat(3 - stars);
             $('rScore').textContent = score;

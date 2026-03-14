@@ -201,7 +201,7 @@
         <div class="screen active" id="scrStart">
             <div class="start-card">
                 <div class="td-title">🏰 乘法守城戰</div>
-                <div class="td-sub">用數學力量守護你嘅城堡！</div>
+                <div class="td-sub">用數學力量守護你的城堡！</div>
                 <div class="section-label">選擇乘數表</div>
                 <div class="table-grid" id="tGrid"></div>
                 <div style="display:flex;gap:6px;margin-bottom:1.5rem;flex-wrap:wrap">
@@ -248,7 +248,7 @@
         <div class="screen" id="scrShop">
             <div class="shop-card">
                 <div class="shop-title">🛒 商店</div>
-                <div class="shop-sub">強化你嘅城堡同攻擊力！</div>
+                <div class="shop-sub">強化你的城堡和攻擊力！</div>
                 <div class="shop-gold">💰 金幣: <span id="shopGold">0</span></div>
                 <div class="shop-items" id="shopItems"></div>
                 <button class="next-wave-btn" id="nextWaveBtn">⚔️ 下一波！</button>
@@ -625,7 +625,7 @@ function endGame(){
     clearInterval(gameLoop); clearTimeout(spawnTimer);
     monsters.forEach(m=>m.el.remove()); monsters=[];
     const stars = wave>=15?3 : wave>=8?2 : wave>=3?1 : 0;
-    const titles=['繼續加油！💪','唔錯喎！👍','超強！🎉','傳說級！🏆'];
+    const titles=['繼續加油！💪','做得不錯！👍','超強！🎉','傳說級！🏆'];
     $('rTitle').textContent=titles[stars];
     $('rStars').textContent='⭐'.repeat(stars)+'☆'.repeat(3-stars);
     $('rsWave').textContent=wave;
