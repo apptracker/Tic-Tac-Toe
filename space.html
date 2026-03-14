@@ -34,6 +34,16 @@
         .r-btn:hover{transform:translateY(-2px)}
         .r-btn.pri{background:linear-gradient(135deg,var(--accent-gold),var(--accent-x));color:#1a1a2e}
         .r-btn.sec{background:var(--bg-dark);color:var(--text);border:2px solid var(--grid-line)}
+        .name-input{width:100%;padding:.7rem;border-radius:10px;border:2px solid var(--grid-line);background:var(--bg-dark);color:var(--text);font-family:inherit;font-size:1rem;text-align:center;margin:.5rem 0}
+        .name-input:focus{outline:none;border-color:var(--accent-gold)}
+        .lb-title{font-size:1rem;font-weight:900;margin:1rem 0 .5rem;color:var(--accent-gold)}
+        .lb-table{width:100%;border-collapse:collapse;font-size:.8rem}
+        .lb-table th{font-size:.65rem;opacity:.4;padding:.3rem;text-align:left;border-bottom:1px solid var(--grid-line)}
+        .lb-table td{padding:.4rem .3rem;border-bottom:1px solid rgba(255,255,255,.03)}
+        .lb-table .lb-rank{color:var(--accent-gold);font-weight:900;width:28px}
+        .lb-table .lb-name{font-weight:700}.lb-table .lb-score{color:var(--accent-o);font-weight:900;text-align:right}
+        .lb-table .lb-me{background:rgba(255,217,61,.08)}
+        .lb-loading{text-align:center;opacity:.4;font-size:.8rem;padding:1rem}
     </style>
 </head>
 <body>
@@ -79,7 +89,9 @@
                     <div class="r-stat"><div class="r-sv" id="rsHit">0</div><div class="r-sl">命中</div></div>
                     <div class="r-stat"><div class="r-sv" id="rsCombo">0</div><div class="r-sl">最高連擊</div></div>
                 </div>
-                <button class="r-btn pri" id="rRetry">🔄 再玩一次</button>
+                <div id="nameArea"><input class="name-input" id="nameInput" placeholder="輸入你的名字" maxlength="12"><button class="r-btn pri" id="submitScore">📤 提交分數</button></div>
+                <div id="lbArea"><div class="lb-loading">載入排行榜中...</div></div>
+                <button class="r-btn pri" id="rRetry" style="margin-top:.8rem">🔄 再玩一次</button>
                 <button class="r-btn sec" id="rBack">🏠 返回選擇</button>
             </div>
         </div>
@@ -91,6 +103,20 @@ const cv=document.getElementById('gameCanvas'),cx=cv.getContext('2d');
 const W=500,H=700;
 let useAdd=true,useSub=false,numMax=9;
 let score=0,lives=3,combo=0,maxCombo=0,hits=0,wave=0,playing=false;
+// Spaced repetition: track wrong answers in localStorage
+const SR_KEY='space_sr_weights';
+function loadSR(){try{return JSON.parse(localStorage.getItem(SR_KEY))||{};}catch(e){return {};}}
+function saveSR(w){try{localStorage.setItem(SR_KEY,JSON.stringify(w));}catch(e){}}
+function srKey(a,op,b){return a+op+b;}
+function markWrong(a,op,b){const w=loadSR();const k=srKey(a,op,b);w[k]=(w[k]||1)+2;saveSR(w);}
+function markRight(a,op,b){const w=loadSR();const k=srKey(a,op,b);if(w[k])w[k]=Math.max(1,w[k]-1);saveSR(w);}
+// Progressive difficulty
+function getDiffRange(){
+    if(wave<3)return Math.min(numMax,5);
+    if(wave<6)return Math.min(numMax,7);
+    return numMax;
+}
+function getAlienSpeed(){return 0.3+wave*0.02;}
 let ship,bullets,aliens,particles,stars,explosions,texts,shakeT=0;
 let question={a:0,b:0,op:'+',ans:0};
 let alienSpeed=0.4,spawnCD=0,nextQ=true;
@@ -109,7 +135,7 @@ function showScr(id){document.querySelectorAll('.screen').forEach(s=>s.classList
 function startGame(){
     if(!useAdd&&!useSub){useAdd=true;document.getElementById('optAdd').classList.add('on');}
     score=0;lives=3;combo=0;maxCombo=0;hits=0;wave=0;playing=true;
-    alienSpeed=0.4;spawnCD=0;nextQ=true;
+    alienSpeed=0.3;spawnCD=0;nextQ=true;
     ship={x:W/2,y:H-60,w:40,trail:[]};
     bullets=[];aliens=[];particles=[];explosions=[];texts=[];
     stars=[];for(let i=0;i<80;i++)stars.push({x:Math.random()*W,y:Math.random()*H,s:Math.random()*2+0.5,sp:Math.random()*1+0.3});
@@ -121,12 +147,23 @@ function startGame(){
 
 function genQuestion(){
     const ops=[];if(useAdd)ops.push('+');if(useSub)ops.push('-');
-    const op=ops[Math.floor(Math.random()*ops.length)];
-    let a,b,ans;
-    if(op==='+'){a=Math.floor(Math.random()*numMax)+1;b=Math.floor(Math.random()*numMax)+1;ans=a+b;}
-    else{a=Math.floor(Math.random()*numMax)+2;b=Math.floor(Math.random()*a)+1;ans=a-b;}
-    question={a,b,op,ans};
-    document.getElementById('qBar').innerHTML=`${a} <span class="qop">${op}</span> ${b} = <span class="qop">?</span>`;
+    const range=getDiffRange();
+    alienSpeed=getAlienSpeed();
+    // Build candidate pool with spaced repetition weights
+    const sr=loadSR();
+    const pool=[];
+    for(const op of ops){
+        for(let a=1;a<=range;a++){
+            const bMax=op==='+'?range:a-1;
+            for(let b=1;b<=bMax;b++){
+                const weight=sr[srKey(a,op,b)]||1;
+                for(let w=0;w<weight;w++) pool.push({a,b,op,ans:op==='+'?a+b:a-b});
+            }
+        }
+    }
+    const pick=pool[Math.floor(Math.random()*pool.length)];
+    question=pick;
+    document.getElementById('qBar').innerHTML=`${pick.a} <span class="qop">${pick.op}</span> ${pick.b} = <span class="qop">?</span>`;
     spawnAliens();
 }
 
@@ -215,6 +252,7 @@ function update(){
                     hits++;
                     const pts=10+combo*5+(wave*2);
                     score+=pts;
+                    markRight(question.a,question.op,question.b);
                     explode(a.drawX,a.y,'#4CAF50',true);
                     explode(a.drawX,a.y,'#ffd93d',true);
                     flashColor='rgba(76,175,80,0.25)';flashLife=15;
@@ -227,6 +265,7 @@ function update(){
                 }else{
                     combo=0;
                     lives--;
+                    markWrong(question.a,question.op,question.b);
                     explode(a.drawX,a.y,'#F44336',false);
                     for(let k=0;k<20;k++){const ag=Math.random()*Math.PI*2;particles.push({x:a.drawX,y:a.y,vx:Math.cos(ag)*3,vy:Math.sin(ag)*3,life:40,color:'#F44336',size:Math.random()*5+2});}
                     flashColor='rgba(244,67,54,0.35)';flashLife=25;
@@ -327,8 +366,29 @@ function draw(){
     cx.restore();
 }
 
+const LB_API='/api/leaderboard';
+const LB_NAME_KEY='space_player_name';
+
+async function fetchLB(){
+    try{const r=await fetch(LB_API+'?game=space');return await r.json();}catch(e){return [];}
+}
+async function submitLB(name,s,h,c,w){
+    try{localStorage.setItem(LB_NAME_KEY,name);
+    const r=await fetch(LB_API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({game:'space',name,score:s,hits:h,combo:c,wave:w})});
+    return await r.json();}catch(e){return [];}
+}
+function renderLB(entries,myName){
+    if(!entries||entries.length===0)return '<div class="lb-loading">暫時沒有記錄</div>';
+    let html='<table class="lb-table"><tr><th>#</th><th>名字</th><th>分數</th><th>波數</th></tr>';
+    entries.slice(0,15).forEach((e,i)=>{
+        const me=e.name===myName?'lb-me':'';
+        const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1);
+        html+=`<tr class="${me}"><td class="lb-rank">${medal}</td><td class="lb-name">${e.name}</td><td class="lb-score">${e.score}</td><td>${e.wave||'-'}</td></tr>`;
+    });
+    return html+'</table>';
+}
+
 function endGame(){
-    const pct=hits>0?Math.min(100,Math.round(hits/(hits+3-lives+Math.max(0,3-lives))*100)):0;
     const st=wave>=20?3:wave>=10?2:wave>=5?1:0;
     const titles=['繼續加油！💪','做得不錯！👍','太強了！🎉','傳說級！🏆'];
     document.getElementById('rTitle').textContent=titles[st];
@@ -337,6 +397,25 @@ function endGame(){
     document.getElementById('rsHit').textContent=hits;
     document.getElementById('rsCombo').textContent=maxCombo;
     showScr('scrResult');
+    // Pre-fill name
+    const saved=localStorage.getItem(LB_NAME_KEY);
+    if(saved)document.getElementById('nameInput').value=saved;
+    document.getElementById('nameArea').style.display='block';
+    // Load leaderboard
+    document.getElementById('lbArea').innerHTML='<div class="lb-loading">載入排行榜中...</div>';
+    fetchLB().then(entries=>{
+        document.getElementById('lbArea').innerHTML='<div class="lb-title">🏆 全球排行榜</div>'+renderLB(entries,saved);
+    });
+    // Submit handler
+    document.getElementById('submitScore').onclick=async()=>{
+        const name=document.getElementById('nameInput').value.trim();
+        if(!name){document.getElementById('nameInput').style.borderColor='var(--accent-x)';return;}
+        document.getElementById('submitScore').textContent='提交中...';
+        document.getElementById('submitScore').disabled=true;
+        const entries=await submitLB(name,score,hits,maxCombo,wave);
+        document.getElementById('nameArea').style.display='none';
+        document.getElementById('lbArea').innerHTML='<div class="lb-title">🏆 全球排行榜</div>'+renderLB(entries,name);
+    };
 }
 
 // Controls
