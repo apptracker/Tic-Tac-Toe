@@ -57,6 +57,20 @@
         .write-progress{display:flex;align-items:center;justify-content:center;gap:.5rem;font-size:.7rem;opacity:.35;margin-top:.4rem}
         .write-progress-dots{display:flex;gap:3px}.w-dot{width:7px;height:7px;border-radius:50%;background:var(--grid-line)}.w-dot.done{background:var(--accent-o)}.w-dot.wrong{background:var(--accent-x)}.w-dot.current{background:var(--accent-gold);box-shadow:0 0 6px var(--accent-gold)}
 
+        /* ── Admin ── */
+        .admin-gate{background:var(--bg-card);border-radius:20px;padding:2rem;box-shadow:0 20px 40px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.05);text-align:center;max-width:400px;margin:0 auto}
+        .admin-gate input{width:100%;padding:.7rem;border-radius:10px;border:2px solid var(--grid-line);background:var(--bg-dark);color:var(--text);font-family:inherit;font-size:1rem;text-align:center;margin:.8rem 0}
+        .admin-gate input:focus{outline:none;border-color:var(--accent-o)}
+        .admin-panel{max-width:600px;margin:0 auto}
+        .admin-word{background:var(--bg-card);border-radius:14px;padding:1rem;margin-bottom:.8rem;border:1px solid rgba(255,255,255,.05)}
+        .admin-word .aw-head{display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem;font-weight:900;font-size:1rem}
+        .admin-word .aw-idx{background:var(--accent-gold);color:#1a1a2e;width:24px;height:24px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:900;flex-shrink:0}
+        .admin-word label{display:block;font-size:.7rem;opacity:.4;margin-bottom:.2rem;margin-top:.5rem;font-weight:700}
+        .admin-word input,.admin-word textarea{width:100%;padding:.5rem .6rem;border-radius:8px;border:2px solid var(--grid-line);background:var(--bg-dark);color:var(--text);font-family:inherit;font-size:.85rem;resize:vertical}
+        .admin-word input:focus,.admin-word textarea:focus{outline:none;border-color:var(--accent-o)}
+        .admin-actions{display:flex;gap:8px;justify-content:center;margin-top:1rem;flex-wrap:wrap;position:sticky;bottom:0;padding:1rem 0;background:var(--bg-dark)}
+        .admin-actions .w-btn{padding:.6rem 1.2rem;font-size:.85rem}
+
         /* ── Fill-in ── */
         .fill-card{background:var(--bg-card);border-radius:20px;padding:1.5rem;box-shadow:0 20px 40px rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.05);text-align:center}
         .fill-illust{width:180px;height:120px;margin:0 auto .5rem;border-radius:10px;overflow:hidden}
@@ -93,11 +107,13 @@
             <button class="mode-btn" data-mode="write">✍️ 寫字練習</button>
             <button class="mode-btn" data-mode="fill">🧩 填字遊戲</button>
             <button class="mode-btn" data-mode="quiz">🧠 小測驗</button>
+            <button class="mode-btn" data-mode="admin" id="adminBtn">🔧 管理</button>
         </div>
         <div class="mode-panel active" id="panelCards"></div>
         <div class="mode-panel" id="panelWrite"></div>
         <div class="mode-panel" id="panelFill"></div>
         <div class="mode-panel" id="panelQuiz"></div>
+        <div class="mode-panel" id="panelAdmin"></div>
     </div>
     <script src="nav.js"></script>
 <script>
@@ -173,7 +189,19 @@ svg:S(sky('#FFF3E0','#FFE0B2')+`<circle cx="70" cy="60" r="25" fill="#EF5350" op
 svg:S(sky('#C8E6C9','#E8F5E9')+tree(30,105)+tree(210,108)+tree(60,100)+tree(180,102)+`<path d="M120 160 Q110 130 95 110 Q80 90 90 70 Q100 50 120 45" stroke="#8D6E63" stroke-width="18" fill="none" opacity=".4" stroke-linecap="round"/><path d="M120 160 Q110 130 95 110 Q80 90 90 70 Q100 50 120 45" stroke="#BCAAA4" stroke-width="10" fill="none" opacity=".6" stroke-linecap="round" stroke-dasharray="2 6"/>` +ground('#66BB6A',135))},
 ]}];
 
+// Load saved edits from localStorage
+const STORAGE_KEY='gs_vocab_edits';
+function loadEdits(){
+    try{const s=localStorage.getItem(STORAGE_KEY);if(!s)return;const edits=JSON.parse(s);
+    VOCAB.forEach(t=>{t.words.forEach(w=>{const e=edits[w.word];if(e){if(e.word)w.word=e.word;if(e.hint)w.hint=e.hint;if(e.sentence)w.sentence=e.sentence;}});});
+    }catch(e){}
+}
+loadEdits();
+
 const allWords=VOCAB.flatMap(t=>t.words.map(w=>({...w,topic:t.topic,topicIcon:t.icon})));
+
+const ADMIN_PW='Victory123';
+let adminUnlocked=false;
 
 // Mode switching
 document.querySelectorAll('.mode-btn[data-mode]').forEach(btn=>{
@@ -182,8 +210,8 @@ document.querySelectorAll('.mode-btn[data-mode]').forEach(btn=>{
         btn.classList.add('active');
         document.querySelectorAll('.mode-panel').forEach(p=>p.classList.remove('active'));
         const m=btn.dataset.mode;
-        document.getElementById({cards:'panelCards',write:'panelWrite',fill:'panelFill',quiz:'panelQuiz'}[m]).classList.add('active');
-        if(m==='write')startWrite();if(m==='fill')startFill();if(m==='quiz')startQuiz();
+        document.getElementById({cards:'panelCards',write:'panelWrite',fill:'panelFill',quiz:'panelQuiz',admin:'panelAdmin'}[m]).classList.add('active');
+        if(m==='write')startWrite();if(m==='fill')startFill();if(m==='quiz')startQuiz();if(m==='admin')showAdmin();
     };
 });
 
@@ -261,6 +289,45 @@ function showQ(){
     opts.forEach(o=>{const b=document.createElement('button');b.className='quiz-opt';b.textContent=o.word;b.onclick=()=>{g.querySelectorAll('.quiz-opt').forEach(x=>{x.disabled=true;if(x.textContent===w.word)x.classList.add('correct');});if(o.word===w.word)qS++;else b.classList.add('wrong');setTimeout(()=>{qI++;showQ();},800);};g.appendChild(b);});
 }
 function showQR(){const p=Math.round(qS/qO.length*100),s=p>=90?'⭐⭐⭐':p>=70?'⭐⭐☆':p>=50?'⭐☆☆':'☆☆☆',m=p>=90?'太棒了！🎉':p>=70?'做得不錯！👍':p>=50?'繼續加油！💪':'要多溫習！📖';document.getElementById('panelQuiz').innerHTML=`<div class="quiz-card"><div style="font-size:1.8rem;margin-bottom:.5rem">${m}</div><div style="font-size:2.5rem;margin:.8rem 0">${s}</div><div style="font-size:1.1rem;font-weight:900;margin-bottom:1rem">答對${qS}/${qO.length}</div><button class="mode-btn active" onclick="startQuiz()" style="width:100%;padding:.7rem;font-size:.9rem">🔄 再做一次</button></div>`;}
+
+// 5. Admin
+function showAdmin(){
+    const ct=document.getElementById('panelAdmin');
+    if(!adminUnlocked){
+        ct.innerHTML=`<div class="admin-gate"><div style="font-size:2rem;margin-bottom:.5rem">🔐</div><div style="font-size:1rem;font-weight:900;margin-bottom:.3rem">管理員登入</div><div style="font-size:.8rem;opacity:.4;margin-bottom:.5rem">請輸入管理密碼</div><input type="password" id="adminPw" placeholder="密碼"><button class="w-btn gold" id="adminLogin" style="width:100%;padding:.6rem">登入</button><div id="adminErr" style="color:var(--accent-x);font-size:.8rem;margin-top:.5rem"></div></div>`;
+        document.getElementById('adminPw').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('adminLogin').click();});
+        document.getElementById('adminLogin').onclick=()=>{
+            if(document.getElementById('adminPw').value===ADMIN_PW){adminUnlocked=true;showAdmin();}
+            else document.getElementById('adminErr').textContent='密碼錯誤，請重試。';
+        };
+        return;
+    }
+    const words=VOCAB.flatMap(t=>t.words);
+    let html='<div class="admin-panel"><div style="text-align:center;margin-bottom:1rem"><div style="font-size:1.2rem;font-weight:900">🔧 詞語管理</div><div style="font-size:.75rem;opacity:.4">修改詞語、解釋和例句後按「儲存」</div></div>';
+    words.forEach((w,i)=>{
+        html+=`<div class="admin-word"><div class="aw-head"><span class="aw-idx">${i+1}</span><span>${w.word}</span></div><label>詞語</label><input data-i="${i}" data-f="word" value="${w.word}"><label>解釋</label><input data-i="${i}" data-f="hint" value="${w.hint}"><label>例句</label><textarea data-i="${i}" data-f="sentence" rows="2">${w.sentence}</textarea></div>`;
+    });
+    html+=`<div class="admin-actions"><button class="w-btn green" id="adminSave">💾 儲存修改</button><button class="w-btn" id="adminReset">🔄 還原預設</button><button class="w-btn red" id="adminLogout">🔒 登出</button></div></div>`;
+    ct.innerHTML=html;
+
+    document.getElementById('adminSave').onclick=()=>{
+        const edits={};
+        ct.querySelectorAll('[data-i]').forEach(el=>{
+            const i=parseInt(el.dataset.i),f=el.dataset.f,v=el.value.trim();
+            const w=words[i];
+            if(!edits[w.word])edits[w.word]={};
+            edits[w.word][f]=v;
+            w[f]=v;
+        });
+        localStorage.setItem(STORAGE_KEY,JSON.stringify(edits));
+        alert('已儲存！重新載入頁面後生效。');
+        location.reload();
+    };
+    document.getElementById('adminReset').onclick=()=>{
+        if(confirm('確定要還原所有詞語至預設值嗎？')){localStorage.removeItem(STORAGE_KEY);alert('已還原！');location.reload();}
+    };
+    document.getElementById('adminLogout').onclick=()=>{adminUnlocked=false;showAdmin();};
+}
 </script>
 </body>
 </html>
