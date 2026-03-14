@@ -39,7 +39,7 @@
         .section-label { font-size: 0.85rem; font-weight: 700; opacity: 0.6; margin-bottom: 0.75rem; }
 
         .table-grid {
-            display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 1.5rem;
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 1.5rem;
         }
         .table-btn {
             padding: 0.6rem; border-radius: 12px; border: 2px solid var(--grid-line);
@@ -372,7 +372,7 @@
 
         // ── Build start screen ──
         const tableGrid = $('tableGrid');
-        for (let i = 1; i <= 12; i++) {
+        for (let i = 1; i <= 9; i++) {
             const btn = document.createElement('button');
             btn.className = 'table-btn';
             btn.textContent = `×${i}`;
@@ -394,9 +394,10 @@
             });
             $('startBtn').disabled = selectedTables.size === 0;
         }
-        document.getElementById('selOdd').onclick = () => quickSelect([1,3,5,7,9,11]);
-        document.getElementById('selEven').onclick = () => quickSelect([2,4,6,8,10,12]);
-        document.getElementById('selAll').onclick = () => quickSelect([1,2,3,4,5,6,7,8,9,10,11,12]);
+        document.getElementById('selOdd').onclick = () => quickSelect([1,3,5,7,9]);
+        document.getElementById('selEven').onclick = () => quickSelect([2,4,6,8]);
+        document.getElementById('selAll').onclick = () => quickSelect([1,2,3,4,5,6,7,8,9]);
+        quickSelect([1,2,3,4,5,6,7,8,9]);
         document.getElementById('selClear').onclick = () => quickSelect([]);
 
         const diffRow = $('diffRow');
@@ -450,7 +451,7 @@
             answering = true;
             const tables = [...selectedTables];
             const a = tables[Math.floor(Math.random() * tables.length)];
-            const b = Math.floor(Math.random() * 12) + 1;
+            const b = Math.floor(Math.random() * 9) + 1;
             currentAnswer = a * b;
 
             $('question').innerHTML = `${a} <span class="operator">×</span> ${b} = <span class="operator">?</span>`;
