@@ -43,17 +43,31 @@
         .write-illust svg{width:100%;height:100%}
         .write-hint{font-size:.9rem;font-weight:700;margin-bottom:.4rem;opacity:.7}
         .write-prompt{font-size:.75rem;opacity:.35;margin-bottom:.5rem}
-        .char-boxes{display:flex;gap:10px;justify-content:center;margin-bottom:.7rem;flex-wrap:wrap}
-        .char-box{position:relative;width:88px;height:88px;border-radius:10px;overflow:hidden;border:2px solid var(--grid-line);background:#fff;touch-action:none}
-        .char-box canvas{display:block;cursor:crosshair}
-        .char-box-grid{position:absolute;inset:0;pointer-events:none}
-        .char-box-grid line{stroke:#e0e0e0;stroke-width:1;stroke-dasharray:4 3}
-        .char-box-num{position:absolute;top:2px;left:5px;font-size:.6rem;color:#bbb;pointer-events:none;font-weight:700;z-index:2}
-        .char-answer{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:3rem;font-weight:900;color:var(--accent-gold);opacity:0;pointer-events:none;transition:opacity .3s;text-shadow:0 1px 4px rgba(0,0,0,.12);font-family:'Noto Sans TC',sans-serif}
-        .char-answer.show{opacity:1}
+
+        .char-rows{display:flex;flex-direction:column;gap:12px;margin-bottom:.7rem;width:100%}
+        .char-row{display:flex;gap:8px;align-items:center;justify-content:center}
+        .char-row-label{font-size:.7rem;opacity:.35;font-weight:700;width:100%;text-align:center;margin-bottom:2px}
+        .char-write{position:relative;flex:1;max-width:140px;aspect-ratio:1;border-radius:12px;overflow:hidden;border:2px solid var(--grid-line);background:#fff;touch-action:none}
+        .char-write canvas{display:block;width:100%;height:100%;cursor:crosshair}
+        .char-write-grid{position:absolute;inset:0;pointer-events:none}
+        .char-write-grid line{stroke:#ddd;stroke-width:1;stroke-dasharray:5 4}
+        .char-write-num{position:absolute;top:3px;left:6px;font-size:.65rem;color:#bbb;pointer-events:none;font-weight:700;z-index:2}
+        .char-ref{flex:1;max-width:140px;aspect-ratio:1;border-radius:12px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;font-size:2rem;font-weight:900;color:rgba(255,255,255,.1);font-family:'Noto Sans TC',sans-serif;transition:all .3s;border:2px dashed var(--grid-line)}
+        .char-ref.show{background:#fff;color:#222;font-size:4rem;border:2px solid #e0e0e0;border-style:solid}
+        .char-pair-label{display:flex;gap:8px;justify-content:center;width:100%;max-width:296px;margin:0 auto}
+        .char-pair-label span{flex:1;max-width:140px;text-align:center;font-size:.6rem;opacity:.3;font-weight:700}
+
         .write-btns{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-bottom:.5rem}
-        .w-btn{padding:.45rem .9rem;border-radius:10px;border:2px solid var(--grid-line);background:var(--bg-dark);color:var(--text);font-family:inherit;font-size:.8rem;font-weight:700;cursor:pointer;transition:all .15s}
+        .w-btn{padding:.5rem 1rem;border-radius:10px;border:2px solid var(--grid-line);background:var(--bg-dark);color:var(--text);font-family:inherit;font-size:.82rem;font-weight:700;cursor:pointer;transition:all .15s}
         .w-btn:hover{border-color:rgba(255,255,255,.2)}.w-btn.green{border-color:var(--accent-o);color:var(--accent-o)}.w-btn.red{border-color:var(--accent-x);color:var(--accent-x)}.w-btn.gold{border-color:var(--accent-gold);color:var(--accent-gold)}
+
+        .learn-box{background:rgba(255,217,61,.08);border:2px solid rgba(255,217,61,.2);border-radius:14px;padding:1rem;margin:.8rem 0;text-align:center;display:none}
+        .learn-box.show{display:block}
+        .learn-word{font-size:2.5rem;font-weight:900;color:var(--accent-gold);letter-spacing:.2em;margin-bottom:.4rem}
+        .learn-hint{font-size:.85rem;opacity:.6;margin-bottom:.3rem}
+        .learn-sent{font-size:.8rem;opacity:.45;font-style:italic}
+        .learn-tip{font-size:.75rem;color:var(--accent-o);margin-top:.5rem;font-weight:700}
+
         .write-progress{display:flex;align-items:center;justify-content:center;gap:.5rem;font-size:.7rem;opacity:.35;margin-top:.4rem}
         .write-progress-dots{display:flex;gap:3px}.w-dot{width:7px;height:7px;border-radius:50%;background:var(--grid-line)}.w-dot.done{background:var(--accent-o)}.w-dot.wrong{background:var(--accent-x)}.w-dot.current{background:var(--accent-gold);box-shadow:0 0 6px var(--accent-gold)}
 
@@ -235,31 +249,55 @@ document.querySelectorAll('.mode-btn[data-mode]').forEach(btn=>{
 })();
 
 // 2. Writing
-let wI=0,wO=[],wR=[];const BX=88;
+let wI=0,wO=[],wR=[];const CVS=140;
 function startWrite(){wI=0;wR=[];wO=[...allWords].sort(()=>Math.random()-.5);showW();}
 function initBox(cv){
-    const cx=cv.getContext('2d');cx.lineCap='round';cx.lineJoin='round';cx.lineWidth=3.5;cx.strokeStyle='#333';let dr=false;
+    const cx=cv.getContext('2d');
+    const dpr=window.devicePixelRatio||1;
+    const rect=cv.getBoundingClientRect();
+    cv.width=rect.width*dpr;cv.height=rect.height*dpr;
+    cx.scale(dpr,dpr);
+    cx.lineCap='round';cx.lineJoin='round';cx.lineWidth=3;cx.strokeStyle='#222';let dr=false;
     function gp(e){const r=cv.getBoundingClientRect(),t=e.touches?e.touches[0]:e;return[t.clientX-r.left,t.clientY-r.top];}
-    cv.onmousedown=e=>{dr=true;const[x,y]=gp(e);cx.beginPath();cx.moveTo(x,y);};cv.onmousemove=e=>{if(!dr)return;const[x,y]=gp(e);cx.lineTo(x,y);cx.stroke();};cv.onmouseup=cv.onmouseleave=()=>dr=false;
+    cv.onmousedown=e=>{dr=true;const[x,y]=gp(e);cx.beginPath();cx.moveTo(x,y);};
+    cv.onmousemove=e=>{if(!dr)return;const[x,y]=gp(e);cx.lineTo(x,y);cx.stroke();};
+    cv.onmouseup=cv.onmouseleave=()=>dr=false;
     cv.addEventListener('touchstart',e=>{e.preventDefault();dr=true;const[x,y]=gp(e);cx.beginPath();cx.moveTo(x,y);},{passive:false});
     cv.addEventListener('touchmove',e=>{if(!dr)return;e.preventDefault();const[x,y]=gp(e);cx.lineTo(x,y);cx.stroke();},{passive:false});
     cv.addEventListener('touchend',()=>dr=false);
-    return cx;
+    return {cx,clear:()=>{cx.clearRect(0,0,rect.width,rect.height);}};
 }
 function showW(){
     const ct=document.getElementById('panelWrite');
     if(wI>=wO.length)wI=0;
     const w=wO[wI],chars=[...w.word];
-    const gridSvg=`<svg class="char-box-grid" viewBox="0 0 ${BX} ${BX}"><line x1="${BX/2}" y1="0" x2="${BX/2}" y2="${BX}"/><line x1="0" y1="${BX/2}" x2="${BX}" y2="${BX/2}"/></svg>`;
-    const boxes=chars.map((_,i)=>`<div class="char-box"><span class="char-box-num">${i+1}</span>${gridSvg}<canvas width="${BX}" height="${BX}" data-idx="${i}"></canvas><div class="char-answer" data-ca="${i}">${chars[i]}</div></div>`).join('');
-    ct.innerHTML=`<div class="write-card"><div class="write-illust">${w.svg}</div><div class="write-hint">${w.hint}</div><div class="write-prompt">請在每個格子寫出對應的字 ✍️</div><div class="char-boxes">${boxes}</div><div class="write-btns"><button class="w-btn" id="wCl">🗑️ 擦掉</button><button class="w-btn gold" id="wSh">👀 看答案</button><button class="w-btn green" id="wNx" style="display:none">✅ 會寫</button><button class="w-btn red" id="wRt" style="display:none">❌ 再練</button></div><div class="write-progress">第${wI+1}/${wO.length}個<div class="write-progress-dots" id="wD"></div></div></div>`;
-    const canvases=ct.querySelectorAll('.char-box canvas');
-    const ctxs=[];canvases.forEach(cv=>ctxs.push(initBox(cv)));
-    document.getElementById('wCl').onclick=()=>ctxs.forEach((cx,i)=>cx.clearRect(0,0,BX,BX));
-    document.getElementById('wSh').onclick=()=>{ct.querySelectorAll('.char-answer').forEach(a=>a.classList.add('show'));document.getElementById('wSh').style.display='none';document.getElementById('wNx').style.display='';document.getElementById('wRt').style.display='';};
+    const rows=chars.map((_,i)=>`<div class="char-row"><div class="char-write"><span class="char-write-num">第${i+1}字</span><svg class="char-write-grid" viewBox="0 0 100 100"><line x1="50" y1="0" x2="50" y2="100"/><line x1="0" y1="50" x2="100" y2="50"/><line x1="0" y1="0" x2="100" y2="100"/><line x1="100" y1="0" x2="0" y2="100"/></svg><canvas style="width:100%;height:100%" data-idx="${i}"></canvas></div><div class="char-ref" data-cr="${i}" data-char="${chars[i]}">?</div></div>`).join('');
+    const labels=`<div class="char-pair-label"><span>我寫的</span><span>正確答案</span></div>`;
+    ct.innerHTML=`<div class="write-card"><div class="write-illust">${w.svg}</div><div class="write-hint">${w.hint}</div><div class="write-prompt">在左邊格子寫出每個字，然後對比答案 ✍️</div>${labels}<div class="char-rows">${rows}</div><div class="write-btns"><button class="w-btn" id="wCl">🗑️ 擦掉重寫</button><button class="w-btn gold" id="wSh">👀 看答案</button><button class="w-btn green" id="wNx" style="display:none">✅ 會寫，下一個</button><button class="w-btn red" id="wRt" style="display:none">❌ 不會，加強練習</button></div><div class="learn-box" id="learnBox"><div class="learn-word">${w.word}</div><div class="learn-hint">${w.hint}</div><div class="learn-sent">「${w.sentence}」</div><div class="learn-tip">💡 多看幾次，記住每個字的寫法！</div></div><div class="write-progress">第${wI+1}/${wO.length}個<div class="write-progress-dots" id="wD"></div></div></div>`;
+
+    const boxes=[];
+    requestAnimationFrame(()=>{
+        ct.querySelectorAll('.char-write canvas').forEach(cv=>{boxes.push(initBox(cv));});
+    });
+
+    document.getElementById('wCl').onclick=()=>boxes.forEach(b=>b.clear());
+    document.getElementById('wSh').onclick=()=>{
+        ct.querySelectorAll('.char-ref').forEach(r=>{r.textContent=r.dataset.char;r.classList.add('show');});
+        document.getElementById('wSh').style.display='none';
+        document.getElementById('wNx').style.display='';
+        document.getElementById('wRt').style.display='';
+    };
     document.getElementById('wNx').onclick=()=>{wR.push(true);wI++;showW();};
-    document.getElementById('wRt').onclick=()=>{wR.push(false);wO.push(w);wI++;showW();};
-    const dots=document.getElementById('wD');const st=Math.max(0,wR.length-19);for(let i=st;i<wR.length;i++){const d=document.createElement('div');d.className='w-dot '+(wR[i]?'done':'wrong');dots.appendChild(d);}const cu=document.createElement('div');cu.className='w-dot current';dots.appendChild(cu);
+    document.getElementById('wRt').onclick=()=>{
+        wR.push(false);wO.push(w);
+        document.getElementById('learnBox').classList.add('show');
+        document.getElementById('wRt').style.display='none';
+        document.getElementById('wNx').textContent='➡️ 下一個';
+        document.getElementById('wNx').onclick=()=>{wI++;showW();};
+    };
+    const dots=document.getElementById('wD');const st=Math.max(0,wR.length-19);
+    for(let i=st;i<wR.length;i++){const d=document.createElement('div');d.className='w-dot '+(wR[i]?'done':'wrong');dots.appendChild(d);}
+    dots.appendChild(Object.assign(document.createElement('div'),{className:'w-dot current'}));
 }
 
 // 3. Fill
